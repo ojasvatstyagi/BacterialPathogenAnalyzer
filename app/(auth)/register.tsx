@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, Alert } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Alert, Image } from "react-native";
 import { Link, router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/Button";
@@ -80,9 +80,13 @@ export default function RegisterScreen() {
           <Text style={styles.subtitle}>
             Join the professional network for bacterial pathogen analysis
           </Text>
+          <Image
+            source={require("@/assets/appLogo-no-bg.png")}
+            style={styles.logo}
+          />
         </View>
 
-        <Card style={styles.card}>
+        <Card>
           <Text style={styles.cardTitle}>Sign Up</Text>
 
           <Input
@@ -149,7 +153,7 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: "center",
-    marginBottom: spacing.xxl,
+    marginBottom: spacing.lg,
   },
   title: {
     ...typography.heading1,
@@ -162,9 +166,6 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: "center",
     maxWidth: 300,
-  },
-  card: {
-    marginTop: spacing.lg,
   },
   cardTitle: {
     ...typography.heading2,
@@ -186,5 +187,14 @@ const styles = StyleSheet.create({
   link: {
     color: colors.primary,
     fontWeight: "600",
+  },
+  logo: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 4,
+    borderColor: colors.primary,
+    marginBottom: spacing.sm,
+    resizeMode: "contain",
   },
 });

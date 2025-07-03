@@ -6,6 +6,7 @@ import {
   ScrollView,
   Alert,
   Platform,
+  Image,
 } from "react-native";
 import { Link, router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -91,6 +92,10 @@ export default function LoginScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <Text style={styles.title}>Bacterial Pathogen Analyzer</Text>
+          <Image
+            source={require("@/assets/appLogo-no-bg.png")}
+            style={styles.logo}
+          />
           <Text style={styles.subtitle}>
             Professional diagnostic tool for Burkholderia pseudomallei
             identification
@@ -131,7 +136,7 @@ export default function LoginScreen() {
           <Button
             title="Sign in with Google"
             onPress={handleGoogleSignIn}
-            variant="outline"
+            variant="secondary"
             loading={loading}
             style={styles.googleButton}
           />
@@ -202,5 +207,14 @@ const styles = StyleSheet.create({
   link: {
     color: colors.primary,
     fontWeight: "600",
+  },
+  logo: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 4,
+    borderColor: colors.primary,
+    marginBottom: spacing.sm,
+    resizeMode: "contain",
   },
 });

@@ -2,6 +2,7 @@
   "name": "bacterialpathogenanalyzer",
   "version": "1.0.0",
   "main": "expo-router/entry",
+  "icon": "@/assets/appLogo.jpg",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
