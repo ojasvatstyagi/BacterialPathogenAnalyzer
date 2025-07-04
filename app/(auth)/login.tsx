@@ -102,7 +102,7 @@ export default function LoginScreen() {
           </Text>
         </View>
 
-        <Card style={styles.card}>
+        <Card>
           <Text style={styles.cardTitle}>Sign In</Text>
 
           <Input
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: "center",
-    marginBottom: spacing.xxl,
+    marginBottom: spacing.lg,
   },
   title: {
     ...typography.heading1,
@@ -180,9 +180,6 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: "center",
     maxWidth: 300,
-  },
-  card: {
-    marginTop: spacing.lg,
   },
   cardTitle: {
     ...typography.heading2,

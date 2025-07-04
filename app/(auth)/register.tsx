@@ -77,13 +77,13 @@ export default function RegisterScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>
-            Join the professional network for bacterial pathogen analysis
-          </Text>
           <Image
             source={require("@/assets/appLogo-no-bg.png")}
             style={styles.logo}
           />
+          <Text style={styles.subtitle}>
+            Join the professional network for bacterial pathogen analysis
+          </Text>
         </View>
 
         <Card>
