@@ -87,7 +87,10 @@ export default function ProfileScreen() {
     variant?: "default" | "danger";
   }) => (
     <Card
-      style={[styles.optionCard, variant === "danger" && styles.dangerCard]}
+      style={{
+        ...styles.optionCard,
+        ...(variant === "danger" && styles.dangerCard),
+      }}
     >
       <View style={styles.optionContent}>
         <Icon
