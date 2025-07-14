@@ -113,7 +113,7 @@ export default function ProfileScreen() {
       <Button
         title={variant === "danger" ? "Delete" : "Configure"}
         onPress={onPress}
-        variant={variant === "danger" ? "outline" : "outline"}
+        variant={variant === "danger" ? "secondary" : "secondary"}
         size="small"
         style={variant === "danger" && { borderColor: colors.error }}
         textStyle={variant === "danger" && { color: colors.error }}
@@ -235,7 +235,7 @@ export default function ProfileScreen() {
               title="Sign Out"
               onPress={handleSignOut}
               loading={loading}
-              variant="outline"
+              variant="secondary"
               style={styles.signOutButton}
             />
           </Card>

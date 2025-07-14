@@ -125,21 +125,21 @@ export default function HistoryScreen() {
             <Button
               title="All"
               onPress={() => setFilter("all")}
-              variant={filter === "all" ? "primary" : "outline"}
+              variant={filter === "all" ? "primary" : "secondary"}
               size="small"
               style={styles.filterButton}
             />
             <Button
               title="Positive"
               onPress={() => setFilter("positive")}
-              variant={filter === "positive" ? "primary" : "outline"}
+              variant={filter === "positive" ? "primary" : "secondary"}
               size="small"
               style={styles.filterButton}
             />
             <Button
               title="Negative"
               onPress={() => setFilter("negative")}
-              variant={filter === "negative" ? "primary" : "outline"}
+              variant={filter === "negative" ? "primary" : "secondary"}
               size="small"
               style={styles.filterButton}
             />
