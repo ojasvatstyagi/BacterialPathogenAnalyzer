@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, Alert, Image } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Alert } from "react-native";
 import { Link, router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/Button";
@@ -9,11 +9,15 @@ import { useAuth } from "@/context/AuthContext";
 import { colors, typography, spacing } from "@/constants/theme";
 
 export default function RegisterScreen() {
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{
+    firstName?: string;
+    lastName?: string;
     email?: string;
     password?: string;
     confirmPassword?: string;
@@ -23,10 +27,24 @@ export default function RegisterScreen() {
 
   const validateForm = () => {
     const newErrors: {
+      firstName?: string;
+      lastName?: string;
       email?: string;
       password?: string;
       confirmPassword?: string;
     } = {};
+
+    if (!firstName.trim()) {
+      newErrors.firstName = "First name is required";
+    } else if (firstName.trim().length < 2) {
+      newErrors.firstName = "First name must be at least 2 characters";
+    }
+
+    if (!lastName.trim()) {
+      newErrors.lastName = "Last name is required";
+    } else if (lastName.trim().length < 2) {
+      newErrors.lastName = "Last name must be at least 2 characters";
+    }
 
     if (!email) {
       newErrors.email = "Email is required";
@@ -55,13 +73,19 @@ export default function RegisterScreen() {
 
     setLoading(true);
     try {
-      const { error } = await signUp(email, password);
+      const fullName = `${firstName.trim()} ${lastName.trim()}`;
+      const { error } = await signUp(email, password, {
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        full_name: fullName,
+      });
+
       if (error) {
         Alert.alert("Registration Failed", error.message);
       } else {
         Alert.alert(
           "Registration Successful",
-          "Please check your email to verify your account.",
+          `Welcome ${fullName}! Please check your email to verify your account.`,
           [{ text: "OK", onPress: () => router.replace("/(auth)/login") }]
         );
       }
@@ -77,10 +101,6 @@ export default function RegisterScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <Text style={styles.title}>Create Account</Text>
-          <Image
-            source={require("@/assets/appLogo-no-bg.png")}
-            style={styles.logo}
-          />
           <Text style={styles.subtitle}>
             Join the professional network for bacterial pathogen analysis
           </Text>
@@ -88,6 +108,30 @@ export default function RegisterScreen() {
 
         <Card>
           <Text style={styles.cardTitle}>Sign Up</Text>
+
+          <View style={styles.nameRow}>
+            <Input
+              label="First Name"
+              value={firstName}
+              onChangeText={setFirstName}
+              autoCapitalize="words"
+              autoComplete="given-name"
+              error={errors.firstName}
+              placeholder="First name"
+              containerStyle={styles.nameInput}
+            />
+
+            <Input
+              label="Last Name"
+              value={lastName}
+              onChangeText={setLastName}
+              autoCapitalize="words"
+              autoComplete="family-name"
+              error={errors.lastName}
+              placeholder="Last name"
+              containerStyle={styles.nameInput}
+            />
+          </View>
 
           <Input
             label="Email Address"
@@ -105,6 +149,7 @@ export default function RegisterScreen() {
             value={password}
             onChangeText={setPassword}
             secureTextEntry
+            showPasswordToggle
             autoComplete="new-password"
             error={errors.password}
             placeholder="Create a password"
@@ -115,6 +160,7 @@ export default function RegisterScreen() {
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             secureTextEntry
+            showPasswordToggle
             autoComplete="new-password"
             error={errors.confirmPassword}
             placeholder="Confirm your password"
@@ -153,7 +199,7 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: "center",
-    marginBottom: spacing.lg,
+    marginBottom: spacing.xxl,
   },
   title: {
     ...typography.heading1,
@@ -173,6 +219,13 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: spacing.lg,
   },
+  nameRow: {
+    flexDirection: "row",
+    gap: spacing.sm,
+  },
+  nameInput: {
+    flex: 1,
+  },
   signUpButton: {
     marginTop: spacing.md,
   },
@@ -187,14 +240,5 @@ const styles = StyleSheet.create({
   link: {
     color: colors.primary,
     fontWeight: "600",
-  },
-  logo: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 4,
-    borderColor: colors.primary,
-    marginBottom: spacing.sm,
-    resizeMode: "contain",
   },
 });
