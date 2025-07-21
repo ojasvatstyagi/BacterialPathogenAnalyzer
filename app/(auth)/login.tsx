@@ -6,7 +6,6 @@ import {
   ScrollView,
   Alert,
   Platform,
-  Image,
 } from "react-native";
 import { Link, router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -19,7 +18,8 @@ import { colors, typography, spacing } from "@/constants/theme";
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>(
     {}
   );
@@ -48,7 +48,7 @@ export default function LoginScreen() {
   const handleSignIn = async () => {
     if (!validateForm()) return;
 
-    setLoading(true);
+    setEmailLoading(true);
     try {
       const { error } = await signIn(email, password);
       if (error) {
@@ -59,7 +59,7 @@ export default function LoginScreen() {
     } catch (error) {
       Alert.alert("Error", "An unexpected error occurred");
     } finally {
-      setLoading(false);
+      setEmailLoading(false);
     }
   };
 
@@ -72,7 +72,7 @@ export default function LoginScreen() {
       return;
     }
 
-    setLoading(true);
+    setGoogleLoading(true);
     try {
       const { error } = await signInWithGoogle();
       if (error) {
@@ -83,7 +83,7 @@ export default function LoginScreen() {
     } catch (error) {
       Alert.alert("Error", "An unexpected error occurred");
     } finally {
-      setLoading(false);
+      setGoogleLoading(false);
     }
   };
 
@@ -92,10 +92,6 @@ export default function LoginScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <Text style={styles.title}>Bacterial Pathogen Analyzer</Text>
-          <Image
-            source={require("@/assets/appLogo-no-bg.png")}
-            style={styles.logo}
-          />
           <Text style={styles.subtitle}>
             Professional diagnostic tool for Burkholderia pseudomallei
             identification
@@ -121,6 +117,7 @@ export default function LoginScreen() {
             value={password}
             onChangeText={setPassword}
             secureTextEntry
+            showPasswordToggle
             autoComplete="password"
             error={errors.password}
             placeholder="Enter your password"
@@ -129,7 +126,7 @@ export default function LoginScreen() {
           <Button
             title="Sign In"
             onPress={handleSignIn}
-            loading={loading}
+            loading={emailLoading}
             style={styles.signInButton}
           />
 
@@ -137,7 +134,7 @@ export default function LoginScreen() {
             title="Sign in with Google"
             onPress={handleGoogleSignIn}
             variant="secondary"
-            loading={loading}
+            loading={googleLoading}
             style={styles.googleButton}
           />
 
@@ -167,7 +164,7 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: "center",
-    marginBottom: spacing.lg,
+    marginBottom: spacing.xxl,
   },
   title: {
     ...typography.heading1,
@@ -204,14 +201,5 @@ const styles = StyleSheet.create({
   link: {
     color: colors.primary,
     fontWeight: "600",
-  },
-  logo: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 4,
-    borderColor: colors.primary,
-    marginBottom: spacing.sm,
-    resizeMode: "contain",
   },
 });
