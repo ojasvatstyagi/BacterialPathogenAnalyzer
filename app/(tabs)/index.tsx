@@ -1,164 +1,129 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, ScrollView, Alert } from "react-native";
+import React from "react";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
-  Activity,
-  ChartBar as BarChart,
+  Microscope,
+  FlaskConical,
+  Camera,
   Clock,
-  TrendingUp,
+  ChartBar as BarChart3,
 } from "lucide-react-native";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/lib/supabase";
 import { colors, typography, spacing } from "@/constants/theme";
 
-interface AnalysisStats {
-  total: number;
-  thisWeek: number;
-  positive: number;
-  negative: number;
-}
-
-export default function HomeScreen() {
-  const { user, signOut } = useAuth();
-  const [stats, setStats] = useState<AnalysisStats>({
-    total: 0,
-    thisWeek: 0,
-    positive: 0,
-    negative: 0,
-  });
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!user) {
-      router.replace("/(auth)/login");
-      return;
-    }
-    loadStats();
-  }, [user]);
-
-  const loadStats = async () => {
-    try {
-      const { data: analyses, error } = await supabase
-        .from("analyses")
-        .select("*")
-        .eq("user_id", user?.id);
-
-      if (error) throw error;
-
-      const now = new Date();
-      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-      const total = analyses?.length || 0;
-      const thisWeek =
-        analyses?.filter((analysis) => new Date(analysis.created_at) > weekAgo)
-          .length || 0;
-      const positive =
-        analyses?.filter((analysis) => analysis.result?.includes("Probably"))
-          .length || 0;
-      const negative = total - positive;
-
-      setStats({ total, thisWeek, positive, negative });
-    } catch (error) {
-      console.error("Error loading stats:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+export default function AnalyzeScreen() {
   const handleStartAnalysis = () => {
-    router.push("/analyze");
+    router.push("/(tabs)/analyze/characteristics");
   };
 
-  const handleSignOut = async () => {
-    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Sign Out",
-        style: "destructive",
-        onPress: async () => {
-          await signOut();
-          router.replace("/(auth)/login");
-        },
-      },
-    ]);
-  };
-
-  if (!user) {
-    return null;
-  }
+  const AnalysisStep = ({
+    icon: Icon,
+    title,
+    description,
+    stepNumber,
+  }: {
+    icon: any;
+    title: string;
+    description: string;
+    stepNumber: number;
+  }) => (
+    <View style={styles.stepContainer}>
+      <View style={styles.stepHeader}>
+        <View style={styles.stepIconContainer}>
+          <Icon size={24} color={colors.primary} />
+        </View>
+        <View style={styles.stepNumber}>
+          <Text style={styles.stepNumberText}>{stepNumber}</Text>
+        </View>
+      </View>
+      <View style={styles.stepContent}>
+        <Text style={styles.stepTitle}>{title}</Text>
+        <Text style={styles.stepDescription}>{description}</Text>
+      </View>
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
-          <View>
-            <Text style={styles.welcome}>Welcome back</Text>
-            <Text style={styles.userEmail}>{user.email}</Text>
-          </View>
-          <Button
-            title="Sign Out"
-            onPress={handleSignOut}
-            variant="secondary"
-            size="small"
-          />
+          <Text style={styles.title}>Bacterial Analysis</Text>
+          <Text style={styles.subtitle}>
+            Professional diagnostic workflow for Burkholderia pseudomallei
+            identification
+          </Text>
         </View>
 
         <Card style={styles.heroCard}>
-          <Text style={styles.heroTitle}>Bacterial Pathogen Analyzer</Text>
-          <Text style={styles.heroSubtitle}>
-            Professional diagnostic tool for Burkholderia pseudomallei
-            identification
+          <View style={styles.heroIcon}>
+            <Microscope size={48} color={colors.primary} />
+          </View>
+          <Text style={styles.heroTitle}>Start New Analysis</Text>
+          <Text style={styles.heroDescription}>
+            Follow our guided 4-step process to analyze bacterial samples with
+            confidence
           </Text>
           <Button
-            title="Start New Analysis"
+            title="Begin Analysis"
             onPress={handleStartAnalysis}
             style={styles.startButton}
           />
         </Card>
 
-        <View style={styles.statsGrid}>
-          <Card style={styles.statCard}>
-            <View style={styles.statHeader}>
-              <BarChart size={24} color={colors.primary} />
-              <Text style={styles.statNumber}>{stats.total}</Text>
-            </View>
-            <Text style={styles.statLabel}>Total Analyses</Text>
-          </Card>
+        <Card style={styles.processCard}>
+          <Text style={styles.processTitle}>Analysis Process</Text>
+          <Text style={styles.processDescription}>
+            Our streamlined workflow ensures accurate and reliable results
+          </Text>
 
-          <Card style={styles.statCard}>
-            <View style={styles.statHeader}>
-              <Clock size={24} color={colors.primary} />
-              <Text style={styles.statNumber}>{stats.thisWeek}</Text>
-            </View>
-            <Text style={styles.statLabel}>This Week</Text>
-          </Card>
+          <View style={styles.stepsContainer}>
+            <AnalysisStep
+              icon={Microscope}
+              title="Select Characteristics"
+              description="Identify key bacterial characteristics from your microscopic observations"
+              stepNumber={1}
+            />
 
-          <Card style={styles.statCard}>
-            <View style={styles.statHeader}>
-              <TrendingUp size={24} color={colors.primary} />
-              <Text style={styles.statNumber}>{stats.positive}</Text>
-            </View>
-            <Text style={styles.statLabel}>Positive Results</Text>
-          </Card>
+            <AnalysisStep
+              icon={FlaskConical}
+              title="Choose Culture Medium"
+              description="Select the appropriate culture medium used for your sample"
+              stepNumber={2}
+            />
 
-          <Card style={styles.statCard}>
-            <View style={styles.statHeader}>
-              <Activity size={24} color={colors.primary} />
-              <Text style={styles.statNumber}>{stats.negative}</Text>
-            </View>
-            <Text style={styles.statLabel}>Negative Results</Text>
-          </Card>
-        </View>
+            <AnalysisStep
+              icon={Camera}
+              title="Capture Image"
+              description="Take a high-quality photo of your bacterial colonies"
+              stepNumber={3}
+            />
+
+            <AnalysisStep
+              icon={Clock}
+              title="Specify Colony Age"
+              description="Select the age of your bacterial colonies for accurate analysis"
+              stepNumber={4}
+            />
+
+            <AnalysisStep
+              icon={BarChart3}
+              title="Get Results"
+              description="Receive AI-powered analysis with confidence scores"
+              stepNumber={5}
+            />
+          </View>
+        </Card>
 
         <Card style={styles.infoCard}>
-          <Text style={styles.infoTitle}>About Burkholderia pseudomallei</Text>
+          <Text style={styles.infoTitle}>About the Analysis</Text>
           <Text style={styles.infoText}>
-            This app helps identify Burkholderia pseudomallei, the causative
-            agent of melioidosis. Key characteristics include gram-negative
-            bacilli with bipolar appearance and oxidase-positive reactions.
+            This tool uses advanced machine learning algorithms to identify
+            Burkholderia pseudomallei, the causative agent of melioidosis. The
+            analysis considers morphological characteristics, culture medium,
+            colony age, and colony appearance to provide accurate diagnostic
+            support.
           </Text>
         </Card>
       </ScrollView>
@@ -175,22 +140,37 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
   },
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: spacing.lg,
+    marginBottom: spacing.xl,
   },
-  welcome: {
-    ...typography.heading2,
+  title: {
+    ...typography.heading1,
     color: colors.text,
+    textAlign: "center",
+    marginBottom: spacing.sm,
   },
-  userEmail: {
-    ...typography.caption,
+  subtitle: {
+    ...typography.body,
     color: colors.textSecondary,
+    textAlign: "center",
+    lineHeight: 24,
+    maxWidth: 320,
   },
   heroCard: {
     alignItems: "center",
     marginBottom: spacing.lg,
+    backgroundColor: colors.primary + "08",
+    borderWidth: 1,
+    borderColor: colors.primary + "20",
+  },
+  heroIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.primary + "15",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.md,
   },
   heroTitle: {
     ...typography.heading2,
@@ -198,42 +178,84 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: spacing.sm,
   },
-  heroSubtitle: {
+  heroDescription: {
     ...typography.body,
     color: colors.textSecondary,
     textAlign: "center",
     marginBottom: spacing.lg,
+    lineHeight: 24,
   },
   startButton: {
     minWidth: 200,
   },
-  statsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.sm,
+  processCard: {
     marginBottom: spacing.lg,
   },
-  statCard: {
-    flex: 1,
-    minWidth: 150,
-    alignItems: "center",
-  },
-  statHeader: {
-    alignItems: "center",
-    marginBottom: spacing.xs,
-  },
-  statNumber: {
+  processTitle: {
     ...typography.heading2,
     color: colors.text,
-    marginTop: spacing.xs,
+    textAlign: "center",
+    marginBottom: spacing.sm,
   },
-  statLabel: {
-    ...typography.caption,
+  processDescription: {
+    ...typography.body,
     color: colors.textSecondary,
     textAlign: "center",
+    marginBottom: spacing.xl,
+  },
+  stepsContainer: {
+    gap: spacing.lg,
+  },
+  stepContainer: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+  },
+  stepHeader: {
+    alignItems: "center",
+    marginRight: spacing.md,
+    position: "relative",
+  },
+  stepIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.primary + "15",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  stepNumber: {
+    position: "absolute",
+    top: -8,
+    right: -8,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  stepNumberText: {
+    ...typography.caption,
+    color: colors.text,
+    fontWeight: "700",
+    fontSize: 12,
+  },
+  stepContent: {
+    flex: 1,
+    paddingTop: spacing.xs,
+  },
+  stepTitle: {
+    ...typography.heading3,
+    color: colors.text,
+    marginBottom: spacing.xs,
+  },
+  stepDescription: {
+    ...typography.body,
+    color: colors.textSecondary,
+    lineHeight: 22,
   },
   infoCard: {
-    marginTop: spacing.md,
+    backgroundColor: colors.surface,
   },
   infoTitle: {
     ...typography.heading3,
