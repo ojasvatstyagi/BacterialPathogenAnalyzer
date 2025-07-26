@@ -4,9 +4,15 @@ import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
-import { ArrowLeft, Camera, Upload, RotateCcw } from "lucide-react-native";
+import {
+  Camera,
+  Upload,
+  RotateCcw,
+  Image as ImageIcon,
+} from "lucide-react-native";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { TopBar } from "@/components/ui/TopBar";
 import { colors, typography, spacing } from "@/constants/theme";
 
 export default function CaptureScreen() {
@@ -14,7 +20,6 @@ export default function CaptureScreen() {
   const [facing, setFacing] = useState<CameraType>("back");
   const [permission, requestPermission] = useCameraPermissions();
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
   const cameraRef = useRef<CameraView>(null);
 
   const characteristics = params.characteristics
@@ -73,32 +78,27 @@ export default function CaptureScreen() {
     setCapturedImage(null);
   };
 
-  const analyzeImage = async () => {
+  const proceedToAgeSelection = () => {
     if (!capturedImage) return;
 
-    setUploading(true);
-    try {
-      // In a real app, you would upload the image to Supabase storage here
-      // For now, we'll just proceed to results with the local URI
-
-      router.push({
-        pathname: "/(tabs)/analyze/results",
-        params: {
-          characteristics: JSON.stringify(characteristics),
-          medium,
-          imageUri: capturedImage,
-        },
-      });
-    } catch (error) {
-      Alert.alert("Error", "Failed to process image. Please try again.");
-    } finally {
-      setUploading(false);
-    }
+    router.push({
+      pathname: "/(tabs)/analyze/colony-age",
+      params: {
+        characteristics: JSON.stringify(characteristics),
+        medium,
+        imageUri: capturedImage,
+      },
+    });
   };
 
   if (!permission) {
     return (
       <SafeAreaView style={styles.container}>
+        <TopBar
+          title="Capture Image"
+          subtitle="Step 3 of 4"
+          onBack={handleBack}
+        />
         <View style={styles.permissionContainer}>
           <Text style={styles.permissionText}>Loading camera...</Text>
         </View>
@@ -109,13 +109,16 @@ export default function CaptureScreen() {
   if (!permission.granted) {
     return (
       <SafeAreaView style={styles.container}>
+        <TopBar
+          title="Capture Image"
+          subtitle="Step 3 of 4"
+          onBack={handleBack}
+        />
         <View style={styles.permissionContainer}>
           <Card style={styles.permissionCard}>
-            <Camera
-              size={48}
-              color={colors.primary}
-              style={styles.permissionIcon}
-            />
+            <View style={styles.iconContainer}>
+              <Camera size={48} color={colors.primary} />
+            </View>
             <Text style={styles.permissionTitle}>Camera Access Required</Text>
             <Text style={styles.permissionText}>
               We need access to your camera to capture images of bacterial
@@ -126,6 +129,12 @@ export default function CaptureScreen() {
               onPress={requestPermission}
               style={styles.permissionButton}
             />
+            <Button
+              title="Select from Gallery Instead"
+              onPress={pickImage}
+              variant="secondary"
+              style={styles.galleryAlternativeButton}
+            />
           </Card>
         </View>
       </SafeAreaView>
@@ -135,16 +144,11 @@ export default function CaptureScreen() {
   if (capturedImage) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <Button
-            title=""
-            onPress={handleBack}
-            variant="outline"
-            style={styles.backButton}
-          />
-          <Text style={styles.headerTitle}>Review Image</Text>
-          <View style={styles.headerSpacer} />
-        </View>
+        <TopBar
+          title="Review Image"
+          subtitle="Step 3 of 4"
+          onBack={handleBack}
+        />
 
         <View style={styles.previewContainer}>
           <Image source={{ uri: capturedImage }} style={styles.previewImage} />
@@ -152,20 +156,20 @@ export default function CaptureScreen() {
           <Card style={styles.previewActions}>
             <Text style={styles.previewTitle}>Image Captured Successfully</Text>
             <Text style={styles.previewText}>
-              Review your image and proceed with analysis, or retake if needed.
+              Review your image and proceed to specify colony age, or retake if
+              needed.
             </Text>
 
             <View style={styles.actionButtons}>
               <Button
                 title="Retake"
                 onPress={retakePhoto}
-                variant="outline"
+                variant="secondary"
                 style={styles.actionButton}
               />
               <Button
-                title="Analyze Image"
-                onPress={analyzeImage}
-                loading={uploading}
+                title="Next: Colony Age"
+                onPress={proceedToAgeSelection}
                 style={styles.actionButton}
               />
             </View>
@@ -177,21 +181,18 @@ export default function CaptureScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Button
-          title=""
-          onPress={handleBack}
-          variant="outline"
-          style={styles.backButton}
-        />
-        <Text style={styles.headerTitle}>Capture Image</Text>
-        <View style={styles.headerSpacer} />
-      </View>
+      <TopBar
+        title="Capture Image"
+        subtitle="Step 3 of 4"
+        onBack={handleBack}
+      />
 
       <View style={styles.cameraContainer}>
         {Platform.OS === "web" ? (
           <View style={styles.webPlaceholder}>
-            <Camera size={64} color={colors.disabled} />
+            <View style={styles.iconContainer}>
+              <Camera size={64} color={colors.disabled} />
+            </View>
             <Text style={styles.webPlaceholderText}>
               Camera not available in web browser
             </Text>
@@ -213,25 +214,52 @@ export default function CaptureScreen() {
               </View>
 
               <View style={styles.cameraBottom}>
-                <Button
-                  title=""
-                  onPress={pickImage}
-                  variant="outline"
-                  style={styles.galleryButtonSmall}
-                />
+                {/* Gallery Button */}
+                <View style={styles.controlButton}>
+                  <View style={styles.buttonWrapper}>
+                    <Button
+                      title=""
+                      onPress={pickImage}
+                      variant="secondary"
+                      style={styles.sideButton}
+                    />
+                    <View style={styles.buttonIcon}>
+                      <ImageIcon size={20} color={colors.text} />
+                    </View>
+                  </View>
+                  <Text style={styles.buttonLabel}>Gallery</Text>
+                </View>
 
-                <Button
-                  title=""
-                  onPress={takePicture}
-                  style={styles.captureButton}
-                />
+                {/* Capture Button */}
+                <View style={styles.captureButtonContainer}>
+                  <View style={styles.captureWrapper}>
+                    <Button
+                      title=""
+                      onPress={takePicture}
+                      style={styles.captureButton}
+                    />
+                    <View style={styles.captureIcon}>
+                      <Camera size={28} color={colors.text} />
+                    </View>
+                  </View>
+                  <Text style={styles.captureLabel}>Capture</Text>
+                </View>
 
-                <Button
-                  title=""
-                  onPress={toggleCameraFacing}
-                  variant="outline"
-                  style={styles.flipButton}
-                />
+                {/* Flip Camera Button */}
+                <View style={styles.controlButton}>
+                  <View style={styles.buttonWrapper}>
+                    <Button
+                      title=""
+                      onPress={toggleCameraFacing}
+                      variant="secondary"
+                      style={styles.sideButton}
+                    />
+                    <View style={styles.buttonIcon}>
+                      <RotateCcw size={20} color={colors.text} />
+                    </View>
+                  </View>
+                  <Text style={styles.buttonLabel}>Flip</Text>
+                </View>
               </View>
             </View>
           </CameraView>
@@ -246,29 +274,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    padding: 0,
-  },
-  headerTitle: {
-    ...typography.heading3,
-    color: colors.text,
-  },
-  headerSpacer: {
-    width: 40,
-  },
   permissionContainer: {
     flex: 1,
     justifyContent: "center",
@@ -277,8 +282,14 @@ const styles = StyleSheet.create({
   permissionCard: {
     alignItems: "center",
   },
-  permissionIcon: {
-    marginBottom: spacing.md,
+  iconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.primary + "15",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.lg,
   },
   permissionTitle: {
     ...typography.heading2,
@@ -294,6 +305,10 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   permissionButton: {
+    minWidth: 200,
+    marginBottom: spacing.md,
+  },
+  galleryAlternativeButton: {
     minWidth: 200,
   },
   cameraContainer: {
@@ -315,6 +330,7 @@ const styles = StyleSheet.create({
   infoCard: {
     alignSelf: "center",
     maxWidth: 300,
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
   },
   infoText: {
     ...typography.caption,
@@ -324,24 +340,77 @@ const styles = StyleSheet.create({
   cameraBottom: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "flex-end",
+    paddingBottom: spacing.xl,
+  },
+  controlButton: {
     alignItems: "center",
-    paddingBottom: spacing.lg,
+  },
+  buttonWrapper: {
+    position: "relative",
+    width: 56,
+    height: 56,
+  },
+  sideButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    borderColor: "rgba(255, 255, 255, 0.3)",
+  },
+  buttonIcon: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    pointerEvents: "none",
+  },
+  buttonLabel: {
+    ...typography.caption,
+    color: colors.surface,
+    marginTop: spacing.xs,
+    fontWeight: "600",
+    textShadowColor: "rgba(0, 0, 0, 0.5)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  captureButtonContainer: {
+    alignItems: "center",
+  },
+  captureWrapper: {
+    position: "relative",
+    width: 80,
+    height: 80,
   },
   captureButton: {
     width: 80,
     height: 80,
     borderRadius: 40,
     backgroundColor: colors.primary,
+    borderWidth: 4,
+    borderColor: "rgba(255, 255, 255, 0.8)",
   },
-  galleryButtonSmall: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+  captureIcon: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    pointerEvents: "none",
   },
-  flipButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+  captureLabel: {
+    ...typography.caption,
+    color: colors.surface,
+    marginTop: spacing.xs,
+    fontWeight: "700",
+    textShadowColor: "rgba(0, 0, 0, 0.5)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   webPlaceholder: {
     flex: 1,
