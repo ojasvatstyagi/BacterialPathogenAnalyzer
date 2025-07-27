@@ -73,6 +73,40 @@ export default function ProfileScreen() {
     );
   };
 
+  // Get user's display information
+  const getUserDisplayName = () => {
+    if (user?.user_metadata?.full_name) {
+      return user.user_metadata.full_name;
+    }
+    if (user?.user_metadata?.first_name) {
+      const lastName = user.user_metadata.last_name
+        ? ` ${user.user_metadata.last_name}`
+        : "";
+      return `${user.user_metadata.first_name}${lastName}`;
+    }
+    return "Lab Technician";
+  };
+
+  const getUserInitials = () => {
+    const firstName = user?.user_metadata?.first_name;
+    const lastName = user?.user_metadata?.last_name;
+
+    if (firstName && lastName) {
+      return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+    }
+    if (firstName) {
+      return firstName.charAt(0).toUpperCase();
+    }
+    if (user?.email) {
+      return user.email.charAt(0).toUpperCase();
+    }
+    return "U";
+  };
+
+  const getUserRole = () => {
+    return user?.user_metadata?.role || "Lab Technician";
+  };
+
   const ProfileOption = ({
     icon: Icon,
     title,
@@ -137,13 +171,12 @@ export default function ProfileScreen() {
         <Card style={styles.userCard}>
           <View style={styles.userHeader}>
             <View style={styles.userAvatar}>
-              <User size={32} color={colors.primary} />
+              <Text style={styles.userInitials}>{getUserInitials()}</Text>
             </View>
             <View style={styles.userInfo}>
-              <Text style={styles.userName}>
-                {user.user_metadata?.full_name || "Lab Technician"}
-              </Text>
+              <Text style={styles.userName}>{getUserDisplayName()}</Text>
               <Text style={styles.userEmail}>{user.email}</Text>
+              <Text style={styles.userRole}>{getUserRole()}</Text>
               <Text style={styles.userSince}>
                 Member since {new Date(user.created_at).toLocaleDateString()}
               </Text>
@@ -230,15 +263,13 @@ export default function ProfileScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account Actions</Text>
 
-          <Card style={styles.actionCard}>
-            <Button
-              title="Sign Out"
-              onPress={handleSignOut}
-              loading={loading}
-              variant="secondary"
-              style={styles.signOutButton}
-            />
-          </Card>
+          <Button
+            title="Sign Out"
+            onPress={handleSignOut}
+            loading={loading}
+            variant="secondary"
+            style={styles.signOutButton}
+          />
 
           <ProfileOption
             icon={User}
@@ -290,10 +321,15 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: colors.primary + "20",
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
     marginRight: spacing.md,
+  },
+  userInitials: {
+    ...typography.heading3,
+    color: colors.text,
+    fontWeight: "700",
   },
   userInfo: {
     flex: 1,
@@ -305,6 +341,12 @@ const styles = StyleSheet.create({
   userEmail: {
     ...typography.body,
     color: colors.textSecondary,
+    marginTop: spacing.xs,
+  },
+  userRole: {
+    ...typography.caption,
+    color: colors.primary,
+    fontWeight: "600",
     marginTop: spacing.xs,
   },
   userSince: {
@@ -360,6 +402,7 @@ const styles = StyleSheet.create({
   },
   signOutButton: {
     minWidth: 200,
+    marginBottom: 16,
   },
   footer: {
     alignItems: "center",
