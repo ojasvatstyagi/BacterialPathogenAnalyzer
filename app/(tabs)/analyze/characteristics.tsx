@@ -2,10 +2,11 @@ import React, { useState } from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ArrowLeft, Microscope } from "lucide-react-native";
+import { Microscope } from "lucide-react-native";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Checkbox } from "@/components/ui/Checkbox";
+import { TopBar } from "@/components/ui/TopBar";
 import { colors, typography, spacing } from "@/constants/theme";
 
 interface AnalysisData {
@@ -14,11 +15,9 @@ interface AnalysisData {
   imageUri?: string;
 }
 
-const CHARACTERISTICS = [
-  "Gram Negative bacilli",
-  "Bipolar appearance",
-  "Oxidase positive",
-];
+const REQUIRED_CHARACTERISTICS = ["Gram Negative bacilli", "Oxidase positive"];
+
+const OPTIONAL_CHARACTERISTICS = ["Bipolar appearance"];
 
 export default function CharacteristicsScreen() {
   const [selectedCharacteristics, setSelectedCharacteristics] = useState<
@@ -33,11 +32,14 @@ export default function CharacteristicsScreen() {
     );
   };
 
-  const canProceed = selectedCharacteristics.length === CHARACTERISTICS.length;
+  const requiredSelected = REQUIRED_CHARACTERISTICS.every((char) =>
+    selectedCharacteristics.includes(char)
+  );
+
+  const canProceed = requiredSelected;
 
   const handleNext = () => {
     if (canProceed) {
-      // Store data in navigation params or global state
       router.push({
         pathname: "/(tabs)/analyze/media",
         params: {
@@ -53,48 +55,70 @@ export default function CharacteristicsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Button
-          title=""
-          onPress={handleBack}
-          variant="outline"
-          style={styles.backButton}
-        />
-        <Text style={styles.headerTitle}>Bacterial Characteristics</Text>
-        <View style={styles.headerSpacer} />
-      </View>
+      <TopBar
+        title="Bacterial Characteristics"
+        subtitle="Step 1 of 3"
+        onBack={handleBack}
+      />
 
       <ScrollView contentContainerStyle={styles.content}>
         <Card style={styles.instructionCard}>
           <View style={styles.instructionHeader}>
-            <Microscope size={32} color={colors.primary} />
+            <View style={styles.iconContainer}>
+              <Microscope size={32} color={colors.primary} />
+            </View>
             <Text style={styles.instructionTitle}>
               Select Bacterial Characteristics
             </Text>
           </View>
           <Text style={styles.instructionText}>
-            Please select all characteristics that match your bacterial sample.
-            All three characteristics must be present to proceed with image
-            capture.
+            Please select the characteristics that match your bacterial sample.
+            Required characteristics must be present to proceed with analysis.
           </Text>
         </Card>
 
         <Card style={styles.characteristicsCard}>
-          <Text style={styles.sectionTitle}>Observable Characteristics</Text>
+          <Text style={styles.sectionTitle}>Required Characteristics</Text>
+          <Text style={styles.sectionSubtitle}>
+            Both characteristics must be selected to proceed
+          </Text>
 
-          {CHARACTERISTICS.map((characteristic) => (
-            <Checkbox
-              key={characteristic}
-              label={characteristic}
-              checked={selectedCharacteristics.includes(characteristic)}
-              onToggle={() => toggleCharacteristic(characteristic)}
-            />
-          ))}
+          <View style={styles.checkboxContainer}>
+            {REQUIRED_CHARACTERISTICS.map((characteristic) => (
+              <Checkbox
+                key={characteristic}
+                label={characteristic}
+                checked={selectedCharacteristics.includes(characteristic)}
+                onToggle={() => toggleCharacteristic(characteristic)}
+              />
+            ))}
+          </View>
+
+          <Text style={styles.sectionTitle}>Optional Characteristics</Text>
+          <Text style={styles.sectionSubtitle}>
+            Select if observed in your sample
+          </Text>
+
+          <View style={styles.checkboxContainer}>
+            {OPTIONAL_CHARACTERISTICS.map((characteristic) => (
+              <Checkbox
+                key={characteristic}
+                label={characteristic}
+                checked={selectedCharacteristics.includes(characteristic)}
+                onToggle={() => toggleCharacteristic(characteristic)}
+              />
+            ))}
+          </View>
 
           <View style={styles.progress}>
             <Text style={styles.progressText}>
-              {selectedCharacteristics.length} of {CHARACTERISTICS.length}{" "}
-              selected
+              Required:{" "}
+              {
+                REQUIRED_CHARACTERISTICS.filter((char) =>
+                  selectedCharacteristics.includes(char)
+                ).length
+              }{" "}
+              of {REQUIRED_CHARACTERISTICS.length} selected
             </Text>
             <View style={styles.progressBar}>
               <View
@@ -102,23 +126,38 @@ export default function CharacteristicsScreen() {
                   styles.progressFill,
                   {
                     width: `${
-                      (selectedCharacteristics.length /
-                        CHARACTERISTICS.length) *
+                      (REQUIRED_CHARACTERISTICS.filter((char) =>
+                        selectedCharacteristics.includes(char)
+                      ).length /
+                        REQUIRED_CHARACTERISTICS.length) *
                       100
                     }%`,
                   },
                 ]}
               />
             </View>
+            {OPTIONAL_CHARACTERISTICS.filter((char) =>
+              selectedCharacteristics.includes(char)
+            ).length > 0 && (
+              <Text style={styles.optionalText}>
+                Optional:{" "}
+                {
+                  OPTIONAL_CHARACTERISTICS.filter((char) =>
+                    selectedCharacteristics.includes(char)
+                  ).length
+                }{" "}
+                selected
+              </Text>
+            )}
           </View>
         </Card>
 
         {!canProceed && (
           <Card variant="outlined" style={styles.warningCard}>
             <Text style={styles.warningText}>
-              All three characteristics must be selected to proceed. This
-              ensures accurate analysis of potential Burkholderia pseudomallei
-              samples.
+              Both required characteristics must be selected to proceed.
+              Optional characteristics can enhance analysis accuracy but are not
+              mandatory.
             </Text>
           </Card>
         )}
@@ -139,29 +178,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    padding: 0,
-  },
-  headerTitle: {
-    ...typography.heading3,
-    color: colors.text,
-  },
-  headerSpacer: {
-    width: 40,
-  },
   content: {
     padding: spacing.lg,
   },
@@ -173,11 +189,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: spacing.md,
   },
+  iconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: colors.primary + "15",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.sm,
+  },
   instructionTitle: {
     ...typography.heading2,
     color: colors.text,
     textAlign: "center",
-    marginTop: spacing.sm,
   },
   instructionText: {
     ...typography.body,
@@ -191,27 +215,43 @@ const styles = StyleSheet.create({
   sectionTitle: {
     ...typography.heading3,
     color: colors.text,
+    marginBottom: spacing.xs,
+    marginTop: spacing.md,
+  },
+  sectionSubtitle: {
+    ...typography.caption,
+    color: colors.textSecondary,
     marginBottom: spacing.md,
   },
+  checkboxContainer: {
+    marginBottom: spacing.lg,
+  },
   progress: {
-    marginTop: spacing.lg,
+    marginTop: spacing.md,
   },
   progressText: {
     ...typography.caption,
     color: colors.textSecondary,
     textAlign: "center",
-    marginBottom: spacing.xs,
+    marginBottom: spacing.sm,
+  },
+  optionalText: {
+    ...typography.caption,
+    color: colors.primary,
+    textAlign: "center",
+    marginTop: spacing.xs,
+    fontWeight: "600",
   },
   progressBar: {
-    height: 4,
+    height: 6,
     backgroundColor: colors.border,
-    borderRadius: 2,
+    borderRadius: 3,
     overflow: "hidden",
   },
   progressFill: {
     height: "100%",
     backgroundColor: colors.primary,
-    borderRadius: 2,
+    borderRadius: 3,
   },
   warningCard: {
     marginBottom: spacing.lg,
