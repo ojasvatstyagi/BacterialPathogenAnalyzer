@@ -7,6 +7,7 @@ export default function AnalyzeLayout() {
       <Stack.Screen name="characteristics" options={{ headerShown: false }} />
       <Stack.Screen name="media" options={{ headerShown: false }} />
       <Stack.Screen name="capture" options={{ headerShown: false }} />
+      <Stack.Screen name="colony-age" options={{ headerShown: false }} />
       <Stack.Screen name="results" options={{ headerShown: false }} />
     </Stack>
   );
