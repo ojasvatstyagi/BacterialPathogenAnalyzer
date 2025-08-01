@@ -11,6 +11,7 @@ import {
 } from "lucide-react-native";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { TopBar } from "@/components/ui/TopBar";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { colors, typography, spacing } from "@/constants/theme";
@@ -19,6 +20,13 @@ interface AnalysisResult {
   result: string;
   confidence: number;
 }
+
+const COLONY_AGES = [
+  { value: "24h", label: "24 hours" },
+  { value: "48h", label: "48 hours" },
+  { value: "72h", label: "72 hours" },
+  { value: "96h", label: "96 hours" },
+];
 
 export default function ResultsScreen() {
   const params = useLocalSearchParams();
@@ -35,6 +43,7 @@ export default function ResultsScreen() {
     : [];
   const medium = params.medium as string;
   const imageUri = params.imageUri as string;
+  const colonyAge = params.colonyAge as string;
 
   useEffect(() => {
     analyzeImage();
@@ -80,6 +89,7 @@ export default function ResultsScreen() {
         image_url: imageUri, // In production, upload to Supabase Storage first
         result: analysisResult.result,
         confidence: analysisResult.confidence,
+        colony_age: colonyAge,
       });
 
       if (error) throw error;
@@ -114,6 +124,7 @@ export default function ResultsScreen() {
       const reportData = {
         characteristics,
         medium,
+        colonyAge,
         result: analysisResult.result,
         confidence: analysisResult.confidence,
         timestamp: new Date().toISOString(),
@@ -146,14 +157,24 @@ export default function ResultsScreen() {
     router.push("/(tabs)");
   };
 
+  const handleBack = () => {
+    router.back();
+  };
+
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
+        <TopBar title="Analyzing..." onBack={handleBack} />
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Analyzing image...</Text>
-          <Text style={styles.loadingSubtext}>
-            Processing bacterial characteristics and colony morphology
-          </Text>
+          <View style={styles.loadingContent}>
+            <View style={styles.loadingIcon}>
+              <Text style={styles.loadingEmoji}>🔬</Text>
+            </View>
+            <Text style={styles.loadingText}>Analyzing image...</Text>
+            <Text style={styles.loadingSubtext}>
+              Processing bacterial characteristics and colony morphology
+            </Text>
+          </View>
         </View>
       </SafeAreaView>
     );
@@ -162,6 +183,7 @@ export default function ResultsScreen() {
   if (!analysisResult) {
     return (
       <SafeAreaView style={styles.container}>
+        <TopBar title="Analysis Failed" onBack={handleBack} />
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Failed to analyze image</Text>
           <Button title="Try Again" onPress={analyzeImage} />
@@ -172,9 +194,13 @@ export default function ResultsScreen() {
 
   const isPositive = analysisResult.result.includes("Probably");
   const confidencePercentage = Math.round(analysisResult.confidence * 100);
+  const colonyAgeLabel =
+    COLONY_AGES.find((age) => age.value === colonyAge)?.label || colonyAge;
 
   return (
     <SafeAreaView style={styles.container}>
+      <TopBar title="Analysis Results" onBack={handleBack} />
+
       <ScrollView contentContainerStyle={styles.content}>
         <Card
           style={{
@@ -183,11 +209,13 @@ export default function ResultsScreen() {
           }}
         >
           <View style={styles.resultHeader}>
-            {isPositive ? (
-              <CheckCircle size={48} color={colors.error} />
-            ) : (
-              <XCircle size={48} color={colors.success} />
-            )}
+            <View style={styles.resultIconContainer}>
+              {isPositive ? (
+                <CheckCircle size={48} color={colors.error} />
+              ) : (
+                <XCircle size={48} color={colors.success} />
+              )}
+            </View>
             <Text style={styles.resultTitle}>Analysis Complete</Text>
           </View>
 
@@ -220,16 +248,26 @@ export default function ResultsScreen() {
 
           <View style={styles.summarySection}>
             <Text style={styles.summaryLabel}>Bacterial Characteristics:</Text>
-            {characteristics.map((characteristic: string, index: number) => (
-              <Text key={index} style={styles.summaryItem}>
-                • {characteristic}
-              </Text>
-            ))}
+            <View style={styles.characteristicsList}>
+              {characteristics.map((characteristic: string, index: number) => (
+                <View key={index} style={styles.characteristicItem}>
+                  <View style={styles.checkmark} />
+                  <Text style={styles.characteristicText}>
+                    {characteristic}
+                  </Text>
+                </View>
+              ))}
+            </View>
           </View>
 
           <View style={styles.summarySection}>
             <Text style={styles.summaryLabel}>Culture Medium:</Text>
             <Text style={styles.summaryValue}>{medium}</Text>
+          </View>
+
+          <View style={styles.summarySection}>
+            <Text style={styles.summaryLabel}>Colony Age:</Text>
+            <Text style={styles.summaryValue}>{colonyAgeLabel}</Text>
           </View>
 
           <View style={styles.summarySection}>
@@ -253,7 +291,7 @@ export default function ResultsScreen() {
               title="Send to Lab"
               onPress={sendToLab}
               loading={sending}
-              variant="outline"
+              variant="secondary"
               style={styles.actionButton}
             />
           </View>
@@ -262,7 +300,7 @@ export default function ResultsScreen() {
             <Button
               title="New Analysis"
               onPress={handleNewAnalysis}
-              variant="outline"
+              variant="secondary"
               style={styles.navButton}
             />
 
@@ -302,6 +340,21 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: spacing.lg,
+  },
+  loadingContent: {
+    alignItems: "center",
+  },
+  loadingIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.primary + "15",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.lg,
+  },
+  loadingEmoji: {
+    fontSize: 32,
   },
   loadingText: {
     ...typography.heading2,
@@ -344,11 +397,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: spacing.lg,
   },
+  resultIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.surface,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.md,
+  },
   resultTitle: {
     ...typography.heading2,
     color: colors.text,
     textAlign: "center",
-    marginTop: spacing.sm,
   },
   resultText: {
     ...typography.heading3,
@@ -410,20 +471,36 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginBottom: spacing.xs,
   },
-  summaryItem: {
+  characteristicsList: {
+    gap: spacing.xs,
+  },
+  characteristicItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginLeft: spacing.sm,
+  },
+  checkmark: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.primary,
+    marginRight: spacing.sm,
+  },
+  characteristicText: {
     ...typography.body,
     color: colors.textSecondary,
-    marginLeft: spacing.sm,
   },
   summaryValue: {
     ...typography.body,
     color: colors.textSecondary,
+    marginLeft: spacing.sm,
   },
   thumbnailImage: {
     width: 100,
     height: 100,
     borderRadius: spacing.sm,
     marginTop: spacing.xs,
+    marginLeft: spacing.sm,
   },
   actionsCard: {
     marginBottom: spacing.lg,
