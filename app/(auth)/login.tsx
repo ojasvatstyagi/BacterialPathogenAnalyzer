@@ -6,6 +6,7 @@ import {
   ScrollView,
   Alert,
   Platform,
+  KeyboardAvoidingView,
 } from "react-native";
 import { Link, router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -18,13 +19,12 @@ import { colors, typography, spacing } from "@/constants/theme";
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [emailLoading, setEmailLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>(
     {}
   );
 
-  const { signIn, signInWithGoogle } = useAuth();
+  const { signIn } = useAuth();
 
   const validateForm = () => {
     const newErrors: { email?: string; password?: string } = {};
@@ -48,7 +48,7 @@ export default function LoginScreen() {
   const handleSignIn = async () => {
     if (!validateForm()) return;
 
-    setEmailLoading(true);
+    setLoading(true);
     try {
       const { error } = await signIn(email, password);
       if (error) {
@@ -59,95 +59,68 @@ export default function LoginScreen() {
     } catch (error) {
       Alert.alert("Error", "An unexpected error occurred");
     } finally {
-      setEmailLoading(false);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    if (Platform.OS === "web") {
-      Alert.alert(
-        "Note",
-        "Google sign-in functionality requires native platforms or proper OAuth configuration."
-      );
-      return;
-    }
-
-    setGoogleLoading(true);
-    try {
-      const { error } = await signInWithGoogle();
-      if (error) {
-        Alert.alert("Google Sign-in Failed", error.message);
-      } else {
-        router.replace("/(tabs)");
-      }
-    } catch (error) {
-      Alert.alert("Error", "An unexpected error occurred");
-    } finally {
-      setGoogleLoading(false);
+      setLoading(false);
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Bacterial Pathogen Analyzer</Text>
-          <Text style={styles.subtitle}>
-            Professional diagnostic tool for Burkholderia pseudomallei
-            identification
-          </Text>
-        </View>
-
-        <Card>
-          <Text style={styles.cardTitle}>Sign In</Text>
-
-          <Input
-            label="Email Address"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoComplete="email"
-            error={errors.email}
-            placeholder="Enter your email"
-          />
-
-          <Input
-            label="Password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            showPasswordToggle
-            autoComplete="password"
-            error={errors.password}
-            placeholder="Enter your password"
-          />
-
-          <Button
-            title="Sign In"
-            onPress={handleSignIn}
-            loading={emailLoading}
-            style={styles.signInButton}
-          />
-
-          <Button
-            title="Sign in with Google"
-            onPress={handleGoogleSignIn}
-            variant="secondary"
-            loading={googleLoading}
-            style={styles.googleButton}
-          />
-
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>
-              Don't have an account?{" "}
-              <Link href="/(auth)/register" style={styles.link}>
-                Sign up
-              </Link>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "padding"}
+      >
+        <View style={styles.content}>
+          <View style={styles.header}>
+            <Text style={styles.title}>Bacterial Pathogen Analyzer</Text>
+            <Text style={styles.subtitle}>
+              Professional diagnostic tool for Burkholderia pseudomallei
+              identification
             </Text>
           </View>
-        </Card>
-      </ScrollView>
+          <ScrollView
+            style={styles.formScrollContainer}
+            contentContainerStyle={styles.formContent}
+          >
+            <Card>
+              <Text style={styles.cardTitle}>Sign In</Text>
+              <Input
+                label="Email Address"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoComplete="email"
+                error={errors.email}
+                placeholder="Enter your email"
+              />
+              <Input
+                label="Password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                showPasswordToggle
+                autoComplete="password"
+                error={errors.password}
+                placeholder="Enter your password"
+              />
+              <Button
+                title="Sign In"
+                onPress={handleSignIn}
+                loading={loading}
+                style={styles.signInButton}
+              />
+              <View style={styles.footer}>
+                <Text style={styles.footerText}>
+                  Don't have an account?{" "}
+                  <Link href="/(auth)/register" style={styles.link}>
+                    Sign up
+                  </Link>
+                </Text>
+              </View>
+            </Card>
+          </ScrollView>
+        </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -157,8 +130,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  scrollContent: {
-    flexGrow: 1,
+  content: {
+    flex: 1,
     justifyContent: "center",
     padding: spacing.lg,
   },
@@ -178,6 +151,13 @@ const styles = StyleSheet.create({
     textAlign: "center",
     maxWidth: 300,
   },
+  formScrollContainer: {
+    flexGrow: 0,
+    flexShrink: 1,
+  },
+  formContent: {
+    justifyContent: "center",
+  },
   cardTitle: {
     ...typography.heading2,
     color: colors.text,
@@ -186,9 +166,6 @@ const styles = StyleSheet.create({
   },
   signInButton: {
     marginTop: spacing.md,
-  },
-  googleButton: {
-    marginTop: spacing.sm,
   },
   footer: {
     alignItems: "center",
