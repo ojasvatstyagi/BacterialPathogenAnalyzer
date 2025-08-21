@@ -9,12 +9,12 @@ import {
 } from "@expo-google-fonts/inter";
 import { SplashScreen } from "expo-router";
 import { AuthProvider } from "@/context/AuthContext";
-// import { useFrameworkReady } from "@/hooks/useFrameworkReady";
+import { useFrameworkReady } from "@/hooks/useFrameworkReady";
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  //   useFrameworkReady();
+  useFrameworkReady();
 
   const [fontsLoaded, fontError] = useFonts({
     "Inter-Regular": Inter_400Regular,
