@@ -1,6 +1,7 @@
 import { Tabs } from "expo-router";
 import { Home, Microscope, History, User } from "lucide-react-native";
 import { colors } from "@/constants/theme";
+import { Platform } from "react-native";
 
 export default function TabLayout() {
   return (
@@ -11,7 +12,14 @@ export default function TabLayout() {
         tabBarInactiveTintColor: colors.disabled,
         tabBarStyle: {
           backgroundColor: colors.surface,
-          borderTopColor: colors.border,
+          borderTopWidth: 0,
+          // iOS Shadow
+          shadowColor: "transparent",
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0,
+          shadowRadius: 0,
+          // Android Elevation
+          elevation: 0,
           paddingTop: 8,
           paddingBottom: 8,
           height: 70,
