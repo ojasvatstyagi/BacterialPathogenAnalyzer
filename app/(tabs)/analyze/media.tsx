@@ -2,10 +2,11 @@ import React, { useState } from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ArrowLeft, FlaskConical } from "lucide-react-native";
+import { FlaskConical } from "lucide-react-native";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Checkbox } from "@/components/ui/Checkbox";
+import { TopBar } from "@/components/ui/TopBar";
 import { colors, typography, spacing } from "@/constants/theme";
 
 const CULTURE_MEDIA = [
@@ -47,21 +48,18 @@ export default function MediaScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Button
-          title=""
-          onPress={handleBack}
-          variant="outline"
-          style={styles.backButton}
-        />
-        <Text style={styles.headerTitle}>Culture Medium</Text>
-        <View style={styles.headerSpacer} />
-      </View>
+      <TopBar
+        title="Culture Medium"
+        subtitle="Step 2 of 3"
+        onBack={handleBack}
+      />
 
       <ScrollView contentContainerStyle={styles.content}>
         <Card style={styles.instructionCard}>
           <View style={styles.instructionHeader}>
-            <FlaskConical size={32} color={colors.primary} />
+            <View style={styles.iconContainer}>
+              <FlaskConical size={32} color={colors.primary} />
+            </View>
             <Text style={styles.instructionTitle}>Select Culture Medium</Text>
           </View>
           <Text style={styles.instructionText}>
@@ -72,24 +70,29 @@ export default function MediaScreen() {
 
         <Card style={styles.summaryCard}>
           <Text style={styles.summaryTitle}>Selected Characteristics</Text>
-          {characteristics.map((characteristic: string, index: number) => (
-            <Text key={index} style={styles.summaryItem}>
-              • {characteristic}
-            </Text>
-          ))}
+          <View style={styles.characteristicsList}>
+            {characteristics.map((characteristic: string, index: number) => (
+              <View key={index} style={styles.characteristicItem}>
+                <View style={styles.checkmark} />
+                <Text style={styles.characteristicText}>{characteristic}</Text>
+              </View>
+            ))}
+          </View>
         </Card>
 
         <Card style={styles.mediaCard}>
           <Text style={styles.sectionTitle}>Available Culture Media</Text>
 
-          {CULTURE_MEDIA.map((medium) => (
-            <Checkbox
-              key={medium}
-              label={medium}
-              checked={selectedMedium === medium}
-              onToggle={() => toggleMedium(medium)}
-            />
-          ))}
+          <View style={styles.checkboxContainer}>
+            {CULTURE_MEDIA.map((medium) => (
+              <Checkbox
+                key={medium}
+                label={medium}
+                checked={selectedMedium === medium}
+                onToggle={() => toggleMedium(medium)}
+              />
+            ))}
+          </View>
 
           {selectedMedium && (
             <View style={styles.selectedInfo}>
@@ -125,29 +128,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    padding: 0,
-  },
-  headerTitle: {
-    ...typography.heading3,
-    color: colors.text,
-  },
-  headerSpacer: {
-    width: 40,
-  },
   content: {
     padding: spacing.lg,
   },
@@ -159,11 +139,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: spacing.md,
   },
+  iconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: colors.primary + "15",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.sm,
+  },
   instructionTitle: {
     ...typography.heading2,
     color: colors.text,
     textAlign: "center",
-    marginTop: spacing.sm,
   },
   instructionText: {
     ...typography.body,
@@ -173,17 +161,33 @@ const styles = StyleSheet.create({
   },
   summaryCard: {
     marginBottom: spacing.lg,
-    backgroundColor: colors.primary + "10",
+    backgroundColor: colors.primary + "08",
+    borderWidth: 1,
+    borderColor: colors.primary + "20",
   },
   summaryTitle: {
     ...typography.heading3,
     color: colors.text,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
   },
-  summaryItem: {
+  characteristicsList: {
+    gap: spacing.xs,
+  },
+  characteristicItem: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  checkmark: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.primary,
+    marginRight: spacing.sm,
+  },
+  characteristicText: {
     ...typography.body,
-    color: colors.textSecondary,
-    marginBottom: spacing.xs,
+    color: colors.text,
+    fontWeight: "500",
   },
   mediaCard: {
     marginBottom: spacing.lg,
@@ -191,13 +195,18 @@ const styles = StyleSheet.create({
   sectionTitle: {
     ...typography.heading3,
     color: colors.text,
+    marginBottom: spacing.lg,
+  },
+  checkboxContainer: {
     marginBottom: spacing.md,
   },
   selectedInfo: {
     marginTop: spacing.md,
-    padding: spacing.sm,
+    padding: spacing.md,
     backgroundColor: colors.success + "10",
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.success + "30",
   },
   selectedText: {
     ...typography.body,
