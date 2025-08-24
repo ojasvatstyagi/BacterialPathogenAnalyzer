@@ -55,7 +55,7 @@ export function Button({
     >
       {loading ? (
         <ActivityIndicator
-          color={variant === "primary" ? colors.text : colors.primary}
+          color={variant === "primary" ? colors.surface : colors.primary}
           size="small"
         />
       ) : (
@@ -83,8 +83,8 @@ const styles = StyleSheet.create({
   },
   outline: {
     backgroundColor: "transparent",
-    borderWidth: 2,
-    borderColor: colors.primary,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   small: {
     paddingHorizontal: 16,
@@ -104,6 +104,7 @@ const styles = StyleSheet.create({
   disabled: {
     backgroundColor: colors.disabled,
     borderColor: colors.disabled,
+    opacity: 0.6,
   },
   text: {
     ...typography.button,
@@ -111,12 +112,15 @@ const styles = StyleSheet.create({
   },
   primaryText: {
     color: colors.text,
+    fontWeight: "600",
   },
   secondaryText: {
     color: colors.text,
+    fontWeight: "500",
   },
   outlineText: {
-    color: colors.primary,
+    color: colors.textSecondary,
+    fontWeight: "500",
   },
   smallText: {
     fontSize: 14,
