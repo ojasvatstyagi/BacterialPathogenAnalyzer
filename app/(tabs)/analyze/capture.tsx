@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system";
 import {
   Camera,
   Upload,
@@ -78,17 +79,34 @@ export default function CaptureScreen() {
     setCapturedImage(null);
   };
 
-  const proceedToAgeSelection = () => {
+  const proceedToAgeSelection = async () => {
     if (!capturedImage) return;
 
-    router.push({
-      pathname: "/(tabs)/analyze/colony-age",
-      params: {
-        characteristics: JSON.stringify(characteristics),
-        medium,
-        imageUri: capturedImage,
-      },
-    });
+    try {
+      const newImageUri = `${
+        FileSystem.documentDirectory
+      }images/${Date.now()}.jpg`;
+      await FileSystem.makeDirectoryAsync(
+        `${FileSystem.documentDirectory}images/`,
+        { intermediates: true }
+      );
+      await FileSystem.moveAsync({
+        from: capturedImage,
+        to: newImageUri,
+      });
+
+      router.push({
+        pathname: "/(tabs)/analyze/colony-age",
+        params: {
+          characteristics: JSON.stringify(characteristics),
+          medium,
+          imageUri: newImageUri,
+        },
+      });
+    } catch (error) {
+      Alert.alert("Error", "Failed to save image. Please try again.");
+      console.error("Failed to move image:", error);
+    }
   };
 
   if (!permission) {
