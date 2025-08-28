@@ -86,7 +86,7 @@ export default function ResultsScreen() {
         user_id: user.id,
         characteristics,
         culture_medium: medium,
-        image_url: imageUri, // In production, upload to Supabase Storage first
+        image_url: imageUri,
         result: analysisResult.result,
         confidence: analysisResult.confidence,
         colony_age: colonyAge,
