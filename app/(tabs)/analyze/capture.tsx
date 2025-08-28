@@ -5,6 +5,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
+import { decode } from "base64-arraybuffer";
+import "react-native-url-polyfill/auto";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/context/AuthContext";
 import {
   Camera,
   Upload,
@@ -18,9 +22,11 @@ import { colors, typography, spacing } from "@/constants/theme";
 
 export default function CaptureScreen() {
   const params = useLocalSearchParams();
+  const { user } = useAuth();
   const [facing, setFacing] = useState<CameraType>("back");
   const [permission, requestPermission] = useCameraPermissions();
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const cameraRef = useRef<CameraView>(null);
 
   const characteristics = params.characteristics
@@ -80,32 +86,59 @@ export default function CaptureScreen() {
   };
 
   const proceedToAgeSelection = async () => {
-    if (!capturedImage) return;
+    if (!capturedImage || !user) return;
 
+    setUploading(true);
     try {
-      const newImageUri = `${
-        FileSystem.documentDirectory
-      }images/${Date.now()}.jpg`;
-      await FileSystem.makeDirectoryAsync(
-        `${FileSystem.documentDirectory}images/`,
-        { intermediates: true }
-      );
-      await FileSystem.moveAsync({
-        from: capturedImage,
-        to: newImageUri,
+      const fileName = `${user.id}/${Date.now()}.jpg`;
+      const contentType = "image/jpeg";
+
+      const base64 = await FileSystem.readAsStringAsync(capturedImage, {
+        encoding: "base64",
       });
+      const arrayBuffer = decode(base64);
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from("colony-images")
+        .upload(fileName, arrayBuffer, {
+          contentType,
+          upsert: false,
+        });
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      const { data: urlData, error: urlError } = await supabase.storage
+        .from("colony-images")
+        .createSignedUrl(fileName, 60 * 60); // 1 hour expiry
+
+      if (urlError) {
+        throw urlError;
+      }
 
       router.push({
         pathname: "/(tabs)/analyze/colony-age",
         params: {
           characteristics: JSON.stringify(characteristics),
           medium,
-          imageUri: newImageUri,
+          imageUri: urlData.signedUrl,
         },
       });
     } catch (error) {
-      Alert.alert("Error", "Failed to save image. Please try again.");
-      console.error("Failed to move image:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "An unknown error occurred during upload.";
+      Alert.alert("Upload Error", `Failed to upload image: ${errorMessage}`, [
+        { text: "OK" },
+      ]);
+      console.error(
+        "Detailed upload error:",
+        JSON.stringify(error, Object.getOwnPropertyNames(error), 2)
+      );
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -188,6 +221,7 @@ export default function CaptureScreen() {
               <Button
                 title="Next: Colony Age"
                 onPress={proceedToAgeSelection}
+                loading={uploading}
                 style={styles.actionButton}
               />
             </View>
