@@ -104,11 +104,12 @@ export default function ResultsScreen() {
           },
           {
             text: "New Analysis",
-            onPress: () => router.push("/(tabs)/analyze/characteristics"),
+            onPress: () => router.push("/(tabs)/analyze"),
           },
         ]
       );
     } catch (error) {
+      console.error("Save error:", error);
       Alert.alert("Error", "Failed to save report. Please try again.");
     } finally {
       setSaving(false);
