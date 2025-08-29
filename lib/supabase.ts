@@ -23,6 +23,7 @@ export type Database = {
           image_url: string | null;
           result: string | null;
           confidence: number | null;
+          colony_age: string;
           created_at: string;
         };
         Insert: {
@@ -33,6 +34,7 @@ export type Database = {
           image_url?: string | null;
           result?: string | null;
           confidence?: number | null;
+          colony_age?: string;
           created_at?: string;
         };
         Update: {
@@ -43,6 +45,7 @@ export type Database = {
           image_url?: string | null;
           result?: string | null;
           confidence?: number | null;
+          colony_age?: string;
           created_at?: string;
         };
       };

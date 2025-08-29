@@ -9,7 +9,7 @@ import {
   RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Calendar, Filter, Search } from "lucide-react-native";
+import { Calendar, ListFilter as Filter, Search } from "lucide-react-native";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/context/AuthContext";
@@ -23,6 +23,7 @@ interface Analysis {
   image_url: string | null;
   result: string | null;
   confidence: number | null;
+  colony_age: string;
   created_at: string;
 }
 
@@ -179,6 +180,9 @@ export default function HistoryScreen() {
                     <Text style={styles.analysisMedium}>
                       {analysis.culture_medium}
                     </Text>
+                    <Text style={styles.analysisColonyAge}>
+                      Colony Age: {analysis.colony_age}
+                    </Text>
                   </View>
                   {analysis.image_url && (
                     <Image
@@ -305,6 +309,11 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   analysisMedium: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
+  },
+  analysisColonyAge: {
     ...typography.caption,
     color: colors.textSecondary,
     marginTop: spacing.xs,
