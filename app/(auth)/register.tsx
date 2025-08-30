@@ -93,8 +93,11 @@ export default function RegisterScreen() {
           error.message || "Could not register"
         );
       } else {
-        Alert.alert("Success", "Account created successfully!");
-        router.replace("/dashboard"); // Adjust navigation as needed
+        Alert.alert(
+          "Account Created",
+          "Please check your email and click the verification link to activate your account."
+        );
+        router.replace("/(auth)/login");
       }
     } catch (err: any) {
       Alert.alert("Sign Up Error", err.message || "Something went wrong");
