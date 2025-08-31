@@ -151,11 +151,11 @@ export default function ResultsScreen() {
   };
 
   const handleNewAnalysis = () => {
-    router.push("/(tabs)/analyze/characteristics");
+    router.replace("/(tabs)/analyze/characteristics");
   };
 
   const handleHome = () => {
-    router.push("/(tabs)");
+    router.replace("/(tabs)");
   };
 
   const handleBack = () => {
