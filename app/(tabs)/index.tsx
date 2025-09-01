@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { View, Text, StyleSheet, ScrollView, Alert } from "react-native";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Activity,
@@ -31,13 +31,15 @@ export default function HomeScreen() {
   });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!user) {
-      router.replace("/(auth)/login");
-      return;
-    }
-    loadStats();
-  }, [user]);
+  useFocusEffect(
+    useCallback(() => {
+      if (user) {
+        loadStats();
+      } else {
+        router.replace("/(auth)/login");
+      }
+    }, [user])
+  );
 
   const loadStats = async () => {
     try {
