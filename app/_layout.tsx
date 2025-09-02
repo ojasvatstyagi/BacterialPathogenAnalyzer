@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Alert, BackHandler } from "react-native";
-import { Stack } from "expo-router";
+import { Stack, useRouter, useNavigation, useSegments } from "expo-router";
+import { useNavigationState } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
 import {
@@ -23,26 +24,37 @@ export default function RootLayout() {
     "Inter-Bold": Inter_700Bold,
   });
 
+  const router = useRouter();
+  const navigation = useNavigation();
+  const segments = useSegments();
+  const navState = useNavigationState((state) => state);
+
   useEffect(() => {
     const backAction = () => {
-      Alert.alert("Exit App", "Are you sure you want to exit?", [
-        {
-          text: "Cancel",
-          onPress: () => null,
-          style: "cancel",
-        },
-        { text: "OK", onPress: () => BackHandler.exitApp() },
-      ]);
-      return true;
+      const isHome = segments.length === 1 && segments.includes("(tabs)");
+      if (isHome) {
+        Alert.alert("Exit App", "Are you sure you want to exit?", [
+          {
+            text: "Cancel",
+            onPress: () => null,
+            style: "cancel",
+          },
+          { text: "OK", onPress: () => BackHandler.exitApp() },
+        ]);
+        return true;
+      }
+      if (navigation.canGoBack()) {
+        router.back();
+        return true;
+      }
+      return false;
     };
-
     const backHandler = BackHandler.addEventListener(
       "hardwareBackPress",
       backAction
     );
-
     return () => backHandler.remove();
-  }, []);
+  }, [segments]);
 
   useEffect(() => {
     if (fontsLoaded || fontError) {
