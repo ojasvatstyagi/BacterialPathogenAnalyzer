@@ -99,12 +99,15 @@ export default function ResultsScreen() {
         "Your analysis report has been saved successfully.",
         [
           {
-            text: "View History",
-            onPress: () => router.push("/(tabs)/history"),
+            text: "Stay Here",
+            style: "cancel",
+            onPress: () => {
+              // Just close the dialog, stay on results screen
+            },
           },
           {
-            text: "New Analysis",
-            onPress: () => router.push("/(tabs)/analyze"),
+            text: "View History",
+            onPress: () => router.replace("/(tabs)/history"),
           },
         ]
       );
@@ -151,10 +154,14 @@ export default function ResultsScreen() {
   };
 
   const handleNewAnalysis = () => {
-    router.replace("/(tabs)/analyze/characteristics");
+    // Clear the entire analysis stack and go to analyze home
+    router.dismissAll();
+    router.replace("/(tabs)/analyze");
   };
 
   const handleHome = () => {
+    // Clear the entire analysis stack and go to home
+    router.dismissAll();
     router.replace("/(tabs)");
   };
 
