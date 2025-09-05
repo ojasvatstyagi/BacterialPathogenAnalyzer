@@ -1,21 +1,31 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, Alert } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  Linking,
+} from "react-native";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   User,
   Mail,
-  Settings,
   CircleHelp as HelpCircle,
   Shield,
   LogOut,
   FileText,
   Bell,
+  ChevronRight,
 } from "lucide-react-native";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useAuth } from "@/context/AuthContext";
 import { colors, typography, spacing } from "@/constants/theme";
+import { supabase } from "@/lib/supabase";
+import * as FileSystem from "expo-file-system";
+import * as Sharing from "expo-sharing";
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
@@ -42,18 +52,78 @@ export default function ProfileScreen() {
     ]);
   };
 
-  const handleExportData = () => {
-    Alert.alert(
-      "Export Data",
-      "This feature will export your analysis history and personal data.",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Export", onPress: () => console.log("Export data") },
-      ]
-    );
+  const handleExportData = async () => {
+    try {
+      setLoading(true);
+      // Fetch analysis data from Supabase
+      const { data: analysisData, error } = await supabase
+        .from("analyses")
+        .select("*")
+        .eq("user_id", user?.id)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        throw new Error("Failed to fetch analysis data: " + error.message);
+      }
+
+      // Generate text content for the file
+      let fileContent = `Analysis Data Export\n\n`;
+      fileContent += `User: ${user?.email}\n`;
+      fileContent += `Export Date: ${new Date().toLocaleDateString()}\n\n`;
+
+      if (analysisData?.length === 0) {
+        fileContent += "No analysis data found.";
+      } else {
+        analysisData?.forEach((item, index) => {
+          fileContent += `--- Analysis #${index + 1} ---\n`;
+          fileContent += `Created At: ${new Date(
+            item.created_at
+          ).toLocaleString()}\n`;
+          fileContent += `Culture Medium: ${item.culture_medium || "N/A"}\n`;
+          fileContent += `Colony Age: ${item.colony_age || "N/A"}\n`;
+          fileContent += `Result: ${item.result || "N/A"}\n`;
+          if (item.confidence) {
+            fileContent += `Confidence: ${Math.round(
+              item.confidence * 100
+            )}%\n`;
+          }
+          if (item.characteristics && item.characteristics.length > 0) {
+            fileContent += `Characteristics: ${item.characteristics.join(
+              ", "
+            )}\n`;
+          }
+          fileContent += `\n`;
+        });
+      }
+
+      const fileUri = `${FileSystem.documentDirectory}analysis_data.txt`;
+      await FileSystem.writeAsStringAsync(fileUri, fileContent, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+
+      // Share the file
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(fileUri, {
+          mimeType: "text/plain",
+          dialogTitle: "Share Analysis Data",
+        });
+      } else {
+        Alert.alert("Error", "Sharing is not available on this device");
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to export data. Please try again.");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDeleteAccount = () => {
+  const handleHelpSupport = () => {
+    // redirect to  Gmail to ojas.vats.tyagi@gmail.com
+    Linking.openURL("mailto:ojas.vats.tyagi@gmail.com");
+  };
+
+  const handleDeleteAccount = async () => {
     Alert.alert(
       "Delete Account",
       "This action cannot be undone. All your data will be permanently deleted.",
@@ -62,11 +132,24 @@ export default function ProfileScreen() {
         {
           text: "Delete",
           style: "destructive",
-          onPress: () => {
-            Alert.alert(
-              "Feature Coming Soon",
-              "Account deletion will be available in a future update."
-            );
+          onPress: async () => {
+            setLoading(true);
+            try {
+              const { error } = await supabase.rpc("delete_user");
+              if (error) {
+                throw error;
+              }
+              Alert.alert("Success", "Your account has been deleted.");
+              await signOut();
+              router.replace("/(auth)/login");
+            } catch (error) {
+              Alert.alert(
+                "Error",
+                "Failed to delete account. Please try again."
+              );
+            } finally {
+              setLoading(false);
+            }
           },
         },
       ]
@@ -188,6 +271,13 @@ export default function ProfileScreen() {
           <Text style={styles.sectionTitle}>Account Settings</Text>
 
           <ProfileOption
+            icon={User}
+            title="Edit Profile"
+            subtitle="Update your name and password"
+            onPress={() => router.push("/(tabs)/profile/edit-profile")}
+          />
+
+          <ProfileOption
             icon={Mail}
             title="Email Notifications"
             subtitle="Manage email alerts and updates"
@@ -207,18 +297,6 @@ export default function ProfileScreen() {
               Alert.alert(
                 "Coming Soon",
                 "Push notification settings will be available soon."
-              )
-            }
-          />
-
-          <ProfileOption
-            icon={Shield}
-            title="Privacy & Security"
-            subtitle="Manage your privacy settings"
-            onPress={() =>
-              Alert.alert(
-                "Coming Soon",
-                "Privacy settings will be available soon."
               )
             }
           />
@@ -242,21 +320,7 @@ export default function ProfileScreen() {
             icon={HelpCircle}
             title="Help & Support"
             subtitle="Get help with the app"
-            onPress={() =>
-              Alert.alert(
-                "Help & Support",
-                "For support, please contact your laboratory administrator."
-              )
-            }
-          />
-
-          <ProfileOption
-            icon={Settings}
-            title="App Settings"
-            subtitle="Configure app preferences"
-            onPress={() =>
-              Alert.alert("Coming Soon", "App settings will be available soon.")
-            }
+            onPress={handleHelpSupport}
           />
         </View>
 
