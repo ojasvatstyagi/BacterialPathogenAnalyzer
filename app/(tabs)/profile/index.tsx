@@ -29,7 +29,9 @@ import * as Sharing from "expo-sharing";
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
-  const [loading, setLoading] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleSignOut = async () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
@@ -38,14 +40,14 @@ export default function ProfileScreen() {
         text: "Sign Out",
         style: "destructive",
         onPress: async () => {
-          setLoading(true);
+          setIsSigningOut(true);
           try {
             await signOut();
             router.replace("/(auth)/login");
           } catch (error) {
             Alert.alert("Error", "Failed to sign out. Please try again.");
           } finally {
-            setLoading(false);
+            setIsSigningOut(false);
           }
         },
       },
@@ -54,7 +56,7 @@ export default function ProfileScreen() {
 
   const handleExportData = async () => {
     try {
-      setLoading(true);
+      setIsExporting(true);
       // Fetch analysis data from Supabase
       const { data: analysisData, error } = await supabase
         .from("analyses")
@@ -114,7 +116,7 @@ export default function ProfileScreen() {
       Alert.alert("Error", "Failed to export data. Please try again.");
       console.error(error);
     } finally {
-      setLoading(false);
+      setIsExporting(false);
     }
   };
 
@@ -133,7 +135,7 @@ export default function ProfileScreen() {
           text: "Delete",
           style: "destructive",
           onPress: async () => {
-            setLoading(true);
+            setIsDeleting(true);
             try {
               const { error } = await supabase.rpc("delete_user");
               if (error) {
@@ -148,7 +150,7 @@ export default function ProfileScreen() {
                 "Failed to delete account. Please try again."
               );
             } finally {
-              setLoading(false);
+              setIsDeleting(false);
             }
           },
         },
@@ -196,12 +198,14 @@ export default function ProfileScreen() {
     subtitle,
     onPress,
     variant = "default",
+    loading = false,
   }: {
     icon: any;
     title: string;
     subtitle: string;
     onPress: () => void;
     variant?: "default" | "danger";
+    loading?: boolean;
   }) => (
     <Card
       style={{
@@ -234,6 +238,7 @@ export default function ProfileScreen() {
         size="small"
         style={variant === "danger" && { borderColor: colors.error }}
         textStyle={variant === "danger" && { color: colors.error }}
+        loading={loading}
       />
     </Card>
   );
@@ -310,6 +315,7 @@ export default function ProfileScreen() {
             title="Export Data"
             subtitle="Download your analysis history"
             onPress={handleExportData}
+            loading={isExporting}
           />
         </View>
 
@@ -330,7 +336,7 @@ export default function ProfileScreen() {
           <Button
             title="Sign Out"
             onPress={handleSignOut}
-            loading={loading}
+            loading={isSigningOut}
             variant="secondary"
             style={styles.signOutButton}
           />
@@ -341,6 +347,7 @@ export default function ProfileScreen() {
             subtitle="Permanently delete your account and data"
             onPress={handleDeleteAccount}
             variant="danger"
+            loading={isDeleting}
           />
         </View>
 
