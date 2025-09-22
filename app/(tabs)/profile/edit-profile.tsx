@@ -16,7 +16,7 @@ export default function EditProfileScreen() {
   );
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleUpdateProfile = async () => {
     if (password !== confirmPassword) {
@@ -24,7 +24,7 @@ export default function EditProfileScreen() {
       return;
     }
 
-    setLoading(true);
+    setIsSaving(true);
     try {
       // Update user metadata (full name)
       const { data, error: metaError } = await supabase.auth.updateUser({
@@ -50,7 +50,7 @@ export default function EditProfileScreen() {
     } catch (error: any) {
       Alert.alert("Error", error.message || "Failed to update profile.");
     } finally {
-      setLoading(false);
+      setIsSaving(false);
     }
   };
 
@@ -72,6 +72,7 @@ export default function EditProfileScreen() {
             onChangeText={setPassword}
             placeholder="Leave blank to keep current password"
             secureTextEntry
+            showPasswordToggle
           />
           <Input
             label="Confirm New Password"
@@ -79,18 +80,18 @@ export default function EditProfileScreen() {
             onChangeText={setConfirmPassword}
             placeholder="Confirm your new password"
             secureTextEntry
+            showPasswordToggle
           />
           <Button
             title="Save Changes"
             onPress={handleUpdateProfile}
-            loading={loading}
+            loading={isSaving}
             style={styles.button}
           />
           <Button
             title="Back to Profile"
             variant="secondary"
             onPress={() => router.back()}
-            loading={loading}
             style={styles.button}
           />
         </Card>
