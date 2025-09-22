@@ -180,14 +180,14 @@ export default function HistoryScreen() {
                     <Text style={styles.analysisMedium}>
                       {analysis.culture_medium}
                     </Text>
-                    <Text style={styles.analysisColonyAge}>
+                    <Text style={styles.analysisMedium}>
                       Colony Age: {analysis.colony_age}
                     </Text>
                   </View>
                   {analysis.image_url && (
                     <Image
                       source={{ uri: analysis.image_url }}
-                      style={styles.analysisThumbnail}
+                      style={styles.analysisImage}
                     />
                   )}
                 </View>
@@ -313,16 +313,13 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: spacing.xs,
   },
-  analysisColonyAge: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    marginTop: spacing.xs,
-  },
-  analysisThumbnail: {
-    width: 60,
-    height: 60,
+  analysisImage: {
+    width: 100,
+    height: 100,
     borderRadius: spacing.sm,
     marginLeft: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   characteristicsList: {
     marginBottom: spacing.sm,
