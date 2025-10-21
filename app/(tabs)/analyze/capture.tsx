@@ -4,8 +4,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
-import * as FileSystem from "expo-file-system";
-import { decode } from "base64-arraybuffer";
+import { File } from "expo-file-system";
 import "react-native-url-polyfill/auto";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
@@ -93,10 +92,8 @@ export default function CaptureScreen() {
       const fileName = `${user.id}/${Date.now()}.jpg`;
       const contentType = "image/jpeg";
 
-      const base64 = await FileSystem.readAsStringAsync(capturedImage, {
-        encoding: "base64",
-      });
-      const arrayBuffer = decode(base64);
+      const imageFile = new File(capturedImage);
+      const arrayBuffer = await imageFile.arrayBuffer();
 
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from("colony-images")
