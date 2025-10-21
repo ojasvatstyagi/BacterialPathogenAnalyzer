@@ -15,6 +15,7 @@ import {
   CircleHelp as HelpCircle,
   Shield,
   LogOut,
+  Trash2,
   FileText,
   Bell,
   ChevronRight,
@@ -24,7 +25,7 @@ import { Card } from "@/components/ui/Card";
 import { useAuth } from "@/context/AuthContext";
 import { colors, typography, spacing } from "@/constants/theme";
 import { supabase } from "@/lib/supabase";
-import * as FileSystem from "expo-file-system";
+import FileSystem, { File } from "expo-file-system";
 import * as Sharing from "expo-sharing";
 
 export default function ProfileScreen() {
@@ -99,13 +100,11 @@ export default function ProfileScreen() {
       }
 
       const fileUri = `${FileSystem.documentDirectory}analysis_data.txt`;
-      await FileSystem.writeAsStringAsync(fileUri, fileContent, {
-        encoding: FileSystem.EncodingType.UTF8,
-      });
+      const file = new File(fileUri);
+      await file.write(fileContent, { encoding: "utf8" });
 
-      // Share the file
       if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(fileUri, {
+        await Sharing.shareAsync(file.uri, {
           mimeType: "text/plain",
           dialogTitle: "Share Analysis Data",
         });
@@ -342,7 +341,7 @@ export default function ProfileScreen() {
           />
 
           <ProfileOption
-            icon={User}
+            icon={Trash2}
             title="Delete Account"
             subtitle="Permanently delete your account and data"
             onPress={handleDeleteAccount}
