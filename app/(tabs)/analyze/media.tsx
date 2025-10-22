@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { FlaskConical } from "lucide-react-native";
+import { FlaskConical, AlertTriangle } from "lucide-react-native";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Checkbox } from "@/components/ui/Checkbox";
@@ -20,10 +20,12 @@ export default function MediaScreen() {
   const params = useLocalSearchParams();
   const [selectedMedium, setSelectedMedium] = useState<string>("");
 
+  // Safely parse characteristics
   const characteristics = params.characteristics
     ? JSON.parse(params.characteristics as string)
     : [];
 
+  // Logic to handle single-selection (toggle on/off)
   const toggleMedium = (medium: string) => {
     setSelectedMedium((prev) => (prev === medium ? "" : medium));
   };
@@ -33,7 +35,7 @@ export default function MediaScreen() {
   const handleNext = () => {
     if (canProceed) {
       router.push({
-        pathname: "/(tabs)/analyze/capture",
+        pathname: "/analyze/capture",
         params: {
           characteristics: JSON.stringify(characteristics),
           medium: selectedMedium,
@@ -50,11 +52,11 @@ export default function MediaScreen() {
     <SafeAreaView style={styles.container}>
       <TopBar
         title="Culture Medium"
-        subtitle="Step 2 of 3"
+        subtitle="Step 2 of 4"
         onBack={handleBack}
       />
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} bounces={true}>
         <Card style={styles.instructionCard}>
           <View style={styles.instructionHeader}>
             <View style={styles.iconContainer}>
@@ -63,8 +65,8 @@ export default function MediaScreen() {
             <Text style={styles.instructionTitle}>Select Culture Medium</Text>
           </View>
           <Text style={styles.instructionText}>
-            Choose the culture medium used for your bacterial sample. Select
-            only one medium that best matches your culture conditions.
+            Choose the **one** culture medium used for your bacterial sample.
+            This information is critical for AI image analysis.
           </Text>
         </Card>
 
@@ -73,15 +75,23 @@ export default function MediaScreen() {
           <View style={styles.characteristicsList}>
             {characteristics.map((characteristic: string, index: number) => (
               <View key={index} style={styles.characteristicItem}>
-                <View style={styles.checkmark} />
+                <FlaskConical
+                  size={14}
+                  color={colors.primary}
+                  style={styles.characteristicIcon}
+                />
                 <Text style={styles.characteristicText}>{characteristic}</Text>
               </View>
             ))}
           </View>
         </Card>
 
+        {/* Selection Card */}
         <Card style={styles.mediaCard}>
           <Text style={styles.sectionTitle}>Available Culture Media</Text>
+          <Text style={styles.sectionSubtitle}>
+            Please select one of the following media:
+          </Text>
 
           <View style={styles.checkboxContainer}>
             {CULTURE_MEDIA.map((medium) => (
@@ -97,7 +107,7 @@ export default function MediaScreen() {
           {selectedMedium && (
             <View style={styles.selectedInfo}>
               <Text style={styles.selectedText}>
-                Selected: {selectedMedium}
+                Medium Selected: {selectedMedium}
               </Text>
             </View>
           )}
@@ -105,10 +115,17 @@ export default function MediaScreen() {
 
         {!canProceed && (
           <Card variant="outlined" style={styles.warningCard}>
-            <Text style={styles.warningText}>
-              Please select one culture medium to proceed with image capture and
-              analysis.
-            </Text>
+            <View style={styles.warningContent}>
+              <AlertTriangle
+                size={20}
+                color={colors.error}
+                style={styles.warningIcon}
+              />
+              <Text style={styles.warningText}>
+                Please select one culture medium to proceed with image capture
+                and analysis.
+              </Text>
+            </View>
           </Card>
         )}
 
@@ -130,6 +147,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: spacing.lg,
+    paddingBottom: spacing.xxl,
   },
   instructionCard: {
     marginBottom: spacing.lg,
@@ -161,9 +179,9 @@ const styles = StyleSheet.create({
   },
   summaryCard: {
     marginBottom: spacing.lg,
-    backgroundColor: colors.primary + "08",
+    backgroundColor: colors.primary + "10",
     borderWidth: 1,
-    borderColor: colors.primary + "20",
+    borderColor: colors.primary + "30",
   },
   summaryTitle: {
     ...typography.heading3,
@@ -171,17 +189,14 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   characteristicsList: {
-    gap: spacing.xs,
+    gap: spacing.sm, // Slightly increased gap
   },
   characteristicItem: {
     flexDirection: "row",
     alignItems: "center",
+    paddingVertical: spacing.xs,
   },
-  checkmark: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors.primary,
+  characteristicIcon: {
     marginRight: spacing.sm,
   },
   characteristicText: {
@@ -195,37 +210,53 @@ const styles = StyleSheet.create({
   sectionTitle: {
     ...typography.heading3,
     color: colors.text,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.xs, // Reduced margin
+    marginTop: spacing.xs,
+  },
+  sectionSubtitle: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginBottom: spacing.md,
+    fontWeight: "600",
   },
   checkboxContainer: {
     marginBottom: spacing.md,
+    marginTop: spacing.sm,
   },
   selectedInfo: {
     marginTop: spacing.md,
     padding: spacing.md,
-    backgroundColor: colors.success + "10",
+    backgroundColor: colors.primary + "10", // Changed to primary success
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: colors.success + "30",
+    borderColor: colors.primary + "30",
   },
   selectedText: {
     ...typography.body,
-    color: colors.success,
+    color: colors.primary, // Changed to primary color
     fontWeight: "600",
     textAlign: "center",
   },
   warningCard: {
     marginBottom: spacing.lg,
-    backgroundColor: colors.warning + "10",
-    borderColor: colors.warning,
+    backgroundColor: colors.error + "10",
+    borderColor: colors.error,
+  },
+  warningContent: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+  },
+  warningIcon: {
+    marginRight: spacing.sm,
+    marginTop: 2,
   },
   warningText: {
     ...typography.body,
-    color: colors.text,
-    textAlign: "center",
+    color: colors.error,
+    flex: 1,
     lineHeight: 22,
   },
   nextButton: {
-    marginTop: spacing.md,
+    marginBottom: spacing.lg,
   },
 });
