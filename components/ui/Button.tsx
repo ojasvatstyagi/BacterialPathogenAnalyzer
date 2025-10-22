@@ -1,3 +1,5 @@
+//components/ui/Button.tsx
+
 import React from "react";
 import {
   TouchableOpacity,
@@ -46,6 +48,10 @@ export function Button({
     textStyle,
   ];
 
+  // Logic for the ActivityIndicator color remains good: white on primary, primary color on others
+  const indicatorColor =
+    variant === "primary" ? colors.surface : colors.primary;
+
   return (
     <TouchableOpacity
       style={buttonStyle}
@@ -54,10 +60,7 @@ export function Button({
       activeOpacity={0.8}
     >
       {loading ? (
-        <ActivityIndicator
-          color={variant === "primary" ? colors.surface : colors.primary}
-          size="small"
-        />
+        <ActivityIndicator color={indicatorColor} size="small" />
       ) : (
         <Text style={textStyles}>{title}</Text>
       )}
@@ -85,6 +88,9 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
     borderWidth: 1,
     borderColor: colors.border,
+    // Fix: Remove shadow for a cleaner outline look
+    shadowOpacity: 0,
+    elevation: 0,
   },
   small: {
     paddingHorizontal: 16,
@@ -132,6 +138,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   disabledText: {
-    color: colors.surface,
+    color: colors.textSecondary,
   },
 });

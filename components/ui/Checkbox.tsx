@@ -1,3 +1,5 @@
+//components/ui/Checkbox.tsx
+
 import React from "react";
 import { TouchableOpacity, Text, View, StyleSheet } from "react-native";
 import { Check } from "lucide-react-native";
@@ -30,7 +32,8 @@ export function Checkbox({
           disabled && styles.checkboxDisabled,
         ]}
       >
-        {checked && <Check color={colors.text} size={18} strokeWidth={3} />}
+        {/* Fix: Changed check icon color to colors.surface (white) for better contrast on colors.primary (lime) */}
+        {checked && <Check color={colors.surface} size={18} strokeWidth={3} />}
       </View>
       <Text style={[styles.label, disabled && styles.labelDisabled]}>
         {label}
