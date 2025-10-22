@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Microscope } from "lucide-react-native";
+import { Microscope, AlertTriangle } from "lucide-react-native"; // Added AlertTriangle for warning card
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Checkbox } from "@/components/ui/Checkbox";
@@ -40,8 +40,9 @@ export default function CharacteristicsScreen() {
 
   const handleNext = () => {
     if (canProceed) {
+      // Note: Passing the data as JSON string in URL params is the correct way for Expo Router
       router.push({
-        pathname: "/(tabs)/analyze/media",
+        pathname: "/analyze/media",
         params: {
           characteristics: JSON.stringify(selectedCharacteristics),
         },
@@ -53,15 +54,23 @@ export default function CharacteristicsScreen() {
     router.back();
   };
 
+  const selectedRequiredCount = REQUIRED_CHARACTERISTICS.filter((char) =>
+    selectedCharacteristics.includes(char)
+  ).length;
+
+  const selectedOptionalCount = OPTIONAL_CHARACTERISTICS.filter((char) =>
+    selectedCharacteristics.includes(char)
+  ).length;
+
   return (
     <SafeAreaView style={styles.container}>
       <TopBar
         title="Bacterial Characteristics"
-        subtitle="Step 1 of 3"
+        subtitle="Step 1 of 4"
         onBack={handleBack}
       />
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} bounces={true}>
         <Card style={styles.instructionCard}>
           <View style={styles.instructionHeader}>
             <View style={styles.iconContainer}>
@@ -73,7 +82,7 @@ export default function CharacteristicsScreen() {
           </View>
           <Text style={styles.instructionText}>
             Please select the characteristics that match your bacterial sample.
-            Required characteristics must be present to proceed with analysis.
+            Required characteristics must be present to proceed.
           </Text>
         </Card>
 
@@ -112,13 +121,8 @@ export default function CharacteristicsScreen() {
 
           <View style={styles.progress}>
             <Text style={styles.progressText}>
-              Required:{" "}
-              {
-                REQUIRED_CHARACTERISTICS.filter((char) =>
-                  selectedCharacteristics.includes(char)
-                ).length
-              }{" "}
-              of {REQUIRED_CHARACTERISTICS.length} selected
+              Required: {selectedRequiredCount} of{" "}
+              {REQUIRED_CHARACTERISTICS.length} selected
             </Text>
             <View style={styles.progressBar}>
               <View
@@ -126,9 +130,7 @@ export default function CharacteristicsScreen() {
                   styles.progressFill,
                   {
                     width: `${
-                      (REQUIRED_CHARACTERISTICS.filter((char) =>
-                        selectedCharacteristics.includes(char)
-                      ).length /
+                      (selectedRequiredCount /
                         REQUIRED_CHARACTERISTICS.length) *
                       100
                     }%`,
@@ -136,17 +138,9 @@ export default function CharacteristicsScreen() {
                 ]}
               />
             </View>
-            {OPTIONAL_CHARACTERISTICS.filter((char) =>
-              selectedCharacteristics.includes(char)
-            ).length > 0 && (
+            {selectedOptionalCount > 0 && (
               <Text style={styles.optionalText}>
-                Optional:{" "}
-                {
-                  OPTIONAL_CHARACTERISTICS.filter((char) =>
-                    selectedCharacteristics.includes(char)
-                  ).length
-                }{" "}
-                selected
+                Optional: {selectedOptionalCount} selected
               </Text>
             )}
           </View>
@@ -154,11 +148,18 @@ export default function CharacteristicsScreen() {
 
         {!canProceed && (
           <Card variant="outlined" style={styles.warningCard}>
-            <Text style={styles.warningText}>
-              Both required characteristics must be selected to proceed.
-              Optional characteristics can enhance analysis accuracy but are not
-              mandatory.
-            </Text>
+            <View style={styles.warningContent}>
+              <AlertTriangle
+                size={20}
+                color={colors.error}
+                style={styles.warningIcon}
+              />
+              <Text style={styles.warningText}>
+                Both required characteristics must be selected to proceed.
+                Optional characteristics can enhance analysis accuracy but are
+                not mandatory.
+              </Text>
+            </View>
           </Card>
         )}
 
@@ -180,6 +181,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: spacing.lg,
+    paddingBottom: spacing.xxl,
   },
   instructionCard: {
     marginBottom: spacing.lg,
@@ -225,15 +227,20 @@ const styles = StyleSheet.create({
   },
   checkboxContainer: {
     marginBottom: spacing.lg,
+    marginTop: spacing.sm,
   },
   progress: {
     marginTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingTop: spacing.md,
   },
   progressText: {
     ...typography.caption,
     color: colors.textSecondary,
     textAlign: "center",
     marginBottom: spacing.sm,
+    fontWeight: "600",
   },
   optionalText: {
     ...typography.caption,
@@ -255,16 +262,24 @@ const styles = StyleSheet.create({
   },
   warningCard: {
     marginBottom: spacing.lg,
-    backgroundColor: colors.warning + "10",
-    borderColor: colors.warning,
+    backgroundColor: colors.error + "10",
+    borderColor: colors.error,
+  },
+  warningContent: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+  },
+  warningIcon: {
+    marginRight: spacing.sm,
+    marginTop: 2,
   },
   warningText: {
     ...typography.body,
-    color: colors.text,
-    textAlign: "center",
+    color: colors.error,
+    flex: 1,
     lineHeight: 22,
   },
   nextButton: {
-    marginTop: spacing.md,
+    marginBottom: spacing.lg,
   },
 });
