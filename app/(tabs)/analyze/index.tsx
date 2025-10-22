@@ -1,3 +1,5 @@
+// app/(tabs)/analyze/index.tsx
+
 import React from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { router } from "expo-router";
@@ -11,43 +13,50 @@ import {
 } from "lucide-react-native";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { colors, typography, spacing } from "@/constants/theme";
+import { colors, typography, spacing, shadows } from "@/constants/theme";
+
+const AnalysisStep = ({
+  icon: Icon,
+  title,
+  description,
+  stepNumber,
+  isLast,
+}: {
+  icon: any;
+  title: string;
+  description: string;
+  stepNumber: number;
+  isLast: boolean;
+}) => (
+  <View style={styles.stepContainer}>
+    <View style={styles.stepHeader}>
+      {/* Vertical Line Connector */}
+      {!isLast && <View style={styles.stepLine} />}
+
+      <View style={styles.stepIconContainer}>
+        <Icon size={24} color={colors.primary} />
+      </View>
+      <View style={styles.stepNumber}>
+        <Text style={[styles.stepNumberText, { color: colors.surface }]}>
+          {stepNumber}
+        </Text>
+      </View>
+    </View>
+    <View style={styles.stepContent}>
+      <Text style={styles.stepTitle}>{title}</Text>
+      <Text style={styles.stepDescription}>{description}</Text>
+    </View>
+  </View>
+);
 
 export default function AnalyzeScreen() {
   const handleStartAnalysis = () => {
-    router.push("/(tabs)/analyze/characteristics");
+    router.push("/analyze/characteristics");
   };
-
-  const AnalysisStep = ({
-    icon: Icon,
-    title,
-    description,
-    stepNumber,
-  }: {
-    icon: any;
-    title: string;
-    description: string;
-    stepNumber: number;
-  }) => (
-    <View style={styles.stepContainer}>
-      <View style={styles.stepHeader}>
-        <View style={styles.stepIconContainer}>
-          <Icon size={24} color={colors.primary} />
-        </View>
-        <View style={styles.stepNumber}>
-          <Text style={styles.stepNumberText}>{stepNumber}</Text>
-        </View>
-      </View>
-      <View style={styles.stepContent}>
-        <Text style={styles.stepTitle}>{title}</Text>
-        <Text style={styles.stepDescription}>{description}</Text>
-      </View>
-    </View>
-  );
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} bounces={true}>
         <View style={styles.header}>
           <Text style={styles.title}>Bacterial Analysis</Text>
           <Text style={styles.subtitle}>
@@ -62,7 +71,7 @@ export default function AnalyzeScreen() {
           </View>
           <Text style={styles.heroTitle}>Start New Analysis</Text>
           <Text style={styles.heroDescription}>
-            Follow our guided 4-step process to analyze bacterial samples with
+            Follow our guided 5-step process to analyze bacterial samples with
             confidence
           </Text>
           <Button
@@ -84,6 +93,7 @@ export default function AnalyzeScreen() {
               title="Select Characteristics"
               description="Identify key bacterial characteristics from your microscopic observations"
               stepNumber={1}
+              isLast={false}
             />
 
             <AnalysisStep
@@ -91,6 +101,7 @@ export default function AnalyzeScreen() {
               title="Choose Culture Medium"
               description="Select the appropriate culture medium used for your sample"
               stepNumber={2}
+              isLast={false}
             />
 
             <AnalysisStep
@@ -98,6 +109,7 @@ export default function AnalyzeScreen() {
               title="Capture Image"
               description="Take a high-quality photo of your bacterial colonies"
               stepNumber={3}
+              isLast={false}
             />
 
             <AnalysisStep
@@ -105,6 +117,7 @@ export default function AnalyzeScreen() {
               title="Specify Colony Age"
               description="Select the age of your bacterial colonies for accurate analysis"
               stepNumber={4}
+              isLast={false}
             />
 
             <AnalysisStep
@@ -112,6 +125,7 @@ export default function AnalyzeScreen() {
               title="Get Results"
               description="Receive AI-powered analysis with confidence scores"
               stepNumber={5}
+              isLast={true}
             />
           </View>
         </Card>
@@ -127,6 +141,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: spacing.lg,
+    paddingBottom: spacing.xxl,
   },
   header: {
     alignItems: "center",
@@ -151,6 +166,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary + "08",
     borderWidth: 1,
     borderColor: colors.primary + "20",
+    ...shadows.md,
   },
   heroIcon: {
     width: 80,
@@ -179,6 +195,7 @@ const styles = StyleSheet.create({
   },
   processCard: {
     marginBottom: spacing.lg,
+    backgroundColor: colors.surface,
   },
   processTitle: {
     ...typography.heading2,
@@ -192,17 +209,28 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: spacing.xl,
   },
-  stepsContainer: {
-    gap: spacing.lg,
-  },
+  stepsContainer: {},
   stepContainer: {
     flexDirection: "row",
     alignItems: "flex-start",
+    marginBottom: spacing.lg,
   },
   stepHeader: {
     alignItems: "center",
     marginRight: spacing.md,
     position: "relative",
+    paddingBottom: 20,
+    minHeight: 120,
+  },
+  // Vertical Line Style
+  stepLine: {
+    position: "absolute",
+    top: 50,
+    bottom: 0,
+    width: 2,
+    backgroundColor: colors.border,
+    left: 23,
+    zIndex: 0,
   },
   stepIconContainer: {
     width: 48,
@@ -211,6 +239,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary + "15",
     alignItems: "center",
     justifyContent: "center",
+    zIndex: 1,
   },
   stepNumber: {
     position: "absolute",
@@ -222,10 +251,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
+    zIndex: 2,
+    borderWidth: 2,
+    borderColor: colors.surface,
   },
   stepNumberText: {
     ...typography.caption,
-    color: colors.text,
+    color: colors.surface,
     fontWeight: "700",
     fontSize: 12,
   },
@@ -242,18 +274,5 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.textSecondary,
     lineHeight: 22,
-  },
-  infoCard: {
-    backgroundColor: colors.surface,
-  },
-  infoTitle: {
-    ...typography.heading3,
-    color: colors.text,
-    marginBottom: spacing.sm,
-  },
-  infoText: {
-    ...typography.body,
-    color: colors.textSecondary,
-    lineHeight: 24,
   },
 });
