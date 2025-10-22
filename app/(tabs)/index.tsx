@@ -1,5 +1,14 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { View, Text, StyleSheet, ScrollView, Alert } from "react-native";
+// app/(tabs)/index.tsx
+
+import React, { useCallback, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -21,6 +30,26 @@ interface AnalysisStats {
   negative: number;
 }
 
+const StatCard = ({
+  icon: Icon,
+  title,
+  value,
+  color,
+}: {
+  icon: any;
+  title: string;
+  value: number;
+  color: string;
+}) => (
+  <Card style={styles.statCard}>
+    <View style={styles.statHeader}>
+      <Icon size={24} color={color} />
+      <Text style={[styles.statNumber, { color: colors.text }]}>{value}</Text>
+    </View>
+    <Text style={styles.statLabel}>{title}</Text>
+  </Card>
+);
+
 export default function HomeScreen() {
   const { user, signOut } = useAuth();
   const [stats, setStats] = useState<AnalysisStats>({
@@ -31,35 +60,50 @@ export default function HomeScreen() {
   });
   const [loading, setLoading] = useState(true);
 
-  useFocusEffect(
-    useCallback(() => {
-      if (user) {
-        loadStats();
-      } else {
-        router.replace("/(auth)/login");
-      }
-    }, [user])
-  );
+  const getUserDisplayName = () => {
+    if (user?.user_metadata?.full_name) {
+      return user.user_metadata.full_name;
+    }
+    if (user?.user_metadata?.first_name) {
+      const lastName = user.user_metadata.last_name
+        ? ` ${user.user_metadata.last_name}`
+        : "";
+      return `${user.user_metadata.first_name}${lastName}`;
+    }
+    return user?.email?.split("@")[0] || "User";
+  };
 
-  const loadStats = async () => {
+  const getUserRole = () => {
+    return user?.user_metadata?.role || "Lab Technician";
+  };
+
+  const loadStats = useCallback(async () => {
+    if (!user?.id) return;
+
     try {
       const { data: analyses, error } = await supabase
         .from("analyses")
         .select("*")
-        .eq("user_id", user?.id);
+        .eq("user_id", user.id);
 
       if (error) throw error;
 
+      const analysesArray = analyses || [];
       const now = new Date();
       const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-      const total = analyses?.length || 0;
+      const total = analysesArray.length;
+
       const thisWeek =
-        analyses?.filter((analysis) => new Date(analysis.created_at) > weekAgo)
-          .length || 0;
+        analysesArray.filter(
+          (analysis) => new Date(analysis.created_at) > weekAgo
+        ).length || 0;
+
       const positive =
-        analyses?.filter((analysis) => analysis.result?.includes("Probably"))
-          .length || 0;
+        analysesArray.filter((analysis) =>
+          analysis.result?.includes("Probably")
+        ).length || 0;
+
       const negative = total - positive;
 
       setStats({ total, thisWeek, positive, negative });
@@ -68,10 +112,24 @@ export default function HomeScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (user) {
+        loadStats();
+      } else {
+        router.replace("/(auth)/login");
+      }
+      // Cleanup for useFocusEffect: return a function that is run when the screen loses focus
+      return () => {
+        setLoading(true); // Reset loading state when leaving the screen
+      };
+    }, [user, loadStats]) // Depend on loadStats (which is stable via useCallback) and user
+  );
 
   const handleStartAnalysis = () => {
-    router.push("/analyze");
+    router.push("/analyze/");
   };
 
   const handleSignOut = async () => {
@@ -88,32 +146,21 @@ export default function HomeScreen() {
     ]);
   };
 
-  // Get user's display name
-  const getUserDisplayName = () => {
-    if (user?.user_metadata?.full_name) {
-      return user.user_metadata.full_name;
-    }
-    if (user?.user_metadata?.first_name) {
-      const lastName = user.user_metadata.last_name
-        ? ` ${user.user_metadata.last_name}`
-        : "";
-      return `${user.user_metadata.first_name}${lastName}`;
-    }
-    // Fallback to email username if no name is available
-    return user?.email?.split("@")[0] || "User";
-  };
-
-  const getUserRole = () => {
-    return user?.user_metadata?.role || "Lab Technician";
-  };
-
-  if (!user) {
-    return null;
+  if (!user || loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={styles.loadingText}>Loading dashboard...</Text>
+      </View>
+    );
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.header}>
           <View style={styles.userInfo}>
             <Text style={styles.welcome}>Welcome back,</Text>
@@ -128,6 +175,7 @@ export default function HomeScreen() {
           />
         </View>
 
+        {/* Hero Card */}
         <Card style={styles.heroCard}>
           <Text style={styles.heroTitle}>Bacterial Pathogen Analyzer</Text>
           <Text style={styles.heroSubtitle}>
@@ -141,40 +189,36 @@ export default function HomeScreen() {
           />
         </Card>
 
+        {/* Stats Grid - Using the StatCard helper for clean JSX */}
         <View style={styles.statsGrid}>
-          <Card style={styles.statCard}>
-            <View style={styles.statHeader}>
-              <BarChart size={24} color={colors.primary} />
-              <Text style={styles.statNumber}>{stats.total}</Text>
-            </View>
-            <Text style={styles.statLabel}>Total Analyses</Text>
-          </Card>
-
-          <Card style={styles.statCard}>
-            <View style={styles.statHeader}>
-              <Clock size={24} color={colors.primary} />
-              <Text style={styles.statNumber}>{stats.thisWeek}</Text>
-            </View>
-            <Text style={styles.statLabel}>This Week</Text>
-          </Card>
-
-          <Card style={styles.statCard}>
-            <View style={styles.statHeader}>
-              <TrendingUp size={24} color={colors.primary} />
-              <Text style={styles.statNumber}>{stats.positive}</Text>
-            </View>
-            <Text style={styles.statLabel}>Positive Results</Text>
-          </Card>
-
-          <Card style={styles.statCard}>
-            <View style={styles.statHeader}>
-              <Activity size={24} color={colors.primary} />
-              <Text style={styles.statNumber}>{stats.negative}</Text>
-            </View>
-            <Text style={styles.statLabel}>Negative Results</Text>
-          </Card>
+          <StatCard
+            icon={BarChart}
+            title="Total Analyses"
+            value={stats.total}
+            color={colors.primary}
+          />
+          <StatCard
+            icon={Clock}
+            title="This Week"
+            value={stats.thisWeek}
+            color={colors.primary}
+          />
+          {/* UI Improvement: Use status colors for Positive/Negative */}
+          <StatCard
+            icon={TrendingUp}
+            title="Positive Results"
+            value={stats.positive}
+            color={colors.error}
+          />
+          <StatCard
+            icon={Activity}
+            title="Negative Results"
+            value={stats.negative}
+            color={colors.success}
+          />
         </View>
 
+        {/* Info Card */}
         <Card style={styles.infoCard}>
           <Text style={styles.infoTitle}>About Burkholderia pseudomallei</Text>
           <Text style={styles.infoText}>
@@ -193,8 +237,21 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  loadingContainer: {
+    // New: Style for centralized loading spinner
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: colors.background,
+  },
+  loadingText: {
+    ...typography.body,
+    color: colors.textSecondary,
+    marginTop: spacing.md,
+  },
   content: {
     padding: spacing.lg,
+    paddingBottom: spacing.xxl, // Ensure enough bottom padding for tab bar clearance
   },
   header: {
     flexDirection: "row",
@@ -223,6 +280,7 @@ const styles = StyleSheet.create({
   heroCard: {
     alignItems: "center",
     marginBottom: spacing.lg,
+    padding: spacing.xl, // Added a slight bottom margin to the hero card
   },
   heroTitle: {
     ...typography.heading2,
@@ -242,13 +300,14 @@ const styles = StyleSheet.create({
   statsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
+    justifyContent: "space-between", // UI Improvement: Space cards evenly
     gap: spacing.sm,
     marginBottom: spacing.lg,
   },
   statCard: {
-    flex: 1,
-    minWidth: 150,
+    width: "48.5%", // UI Improvement: Use percentage width for two columns with gap
     alignItems: "center",
+    padding: spacing.md, // Reduced padding slightly from 'lg' for tighter cards
   },
   statHeader: {
     alignItems: "center",
@@ -263,6 +322,7 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.textSecondary,
     textAlign: "center",
+    minHeight: typography.caption.lineHeight * 2,
   },
   infoCard: {
     marginTop: spacing.md,
