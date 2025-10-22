@@ -1,10 +1,12 @@
+//components/ui/TopBar.tsx
+
 import React from "react";
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  Platform,
+  // Platform is no longer needed for padding select
 } from "react-native";
 import { ArrowLeft } from "lucide-react-native";
 import { colors, typography, spacing, shadows } from "@/constants/theme";
@@ -54,17 +56,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
-    ...Platform.select({
-      ios: {
-        paddingTop: 0,
-      },
-      android: {
-        paddingTop: 0,
-      },
-      web: {
-        paddingTop: 0,
-      },
-    }),
+    // Removed unnecessary Platform.select for paddingTop: 0
   },
   content: {
     flexDirection: "row",
