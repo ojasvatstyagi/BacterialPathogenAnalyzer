@@ -1,12 +1,14 @@
-import React, { useState } from "react";
+//app/(auth)/login.tsx
+
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  Alert,
   Platform,
   KeyboardAvoidingView,
+  TextInput, // Added for useRef typing
 } from "react-native";
 import { Link, router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -23,6 +25,10 @@ export default function LoginScreen() {
   const [errors, setErrors] = useState<{ email?: string; password?: string }>(
     {}
   );
+  const [formError, setFormError] = useState<string | null>(null);
+
+  // Refs for keyboard focus management
+  const passwordRef = useRef<TextInput>(null); // Ref for password input
 
   const { signIn } = useAuth();
 
@@ -46,18 +52,22 @@ export default function LoginScreen() {
   };
 
   const handleSignIn = async () => {
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      setFormError(null); // Clear form error if field errors exist
+      return;
+    }
 
+    setFormError(null);
     setLoading(true);
     try {
       const { error } = await signIn(email, password);
       if (error) {
-        Alert.alert("Login Failed", error.message);
+        setFormError(error.message);
       } else {
         router.replace("/(tabs)");
       }
     } catch (error) {
-      Alert.alert("Error", "An unexpected error occurred");
+      setFormError("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -67,7 +77,8 @@ export default function LoginScreen() {
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "padding"}
+        // Using "height" for smoother Android behavior
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <View style={styles.content}>
           <View style={styles.header}>
@@ -80,6 +91,7 @@ export default function LoginScreen() {
           <ScrollView
             style={styles.formScrollContainer}
             contentContainerStyle={styles.formContent}
+            keyboardShouldPersistTaps="handled" // Ensures keyboard doesn't dismiss easily
           >
             <Card>
               <Text style={styles.cardTitle}>Sign In</Text>
@@ -92,6 +104,9 @@ export default function LoginScreen() {
                 autoComplete="email"
                 error={errors.email}
                 placeholder="Enter your email"
+                // Focus management
+                returnKeyType="next"
+                onSubmitEditing={() => passwordRef.current?.focus()}
               />
               <Input
                 label="Password"
@@ -102,6 +117,10 @@ export default function LoginScreen() {
                 autoComplete="password"
                 error={errors.password}
                 placeholder="Enter your password"
+                // Focus management
+                ref={passwordRef}
+                returnKeyType="go"
+                onSubmitEditing={handleSignIn}
               />
               <Button
                 title="Sign In"
@@ -109,6 +128,8 @@ export default function LoginScreen() {
                 loading={loading}
                 style={styles.signInButton}
               />
+              {/* Smoother Error Handling: Display form error here */}
+              {formError && <Text style={styles.errorText}>{formError}</Text>}
               <View style={styles.footer}>
                 <Text style={styles.footerText}>
                   Don't have an account?{" "}
@@ -178,5 +199,12 @@ const styles = StyleSheet.create({
   link: {
     color: colors.primary,
     fontWeight: "600",
+  },
+  errorText: {
+    ...typography.body,
+    color: colors.error,
+    textAlign: "center",
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
   },
 });

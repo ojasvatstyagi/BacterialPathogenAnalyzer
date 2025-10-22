@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { Alert, BackHandler } from "react-native";
 import { Stack, useRouter, useNavigation, useSegments } from "expo-router";
-import { useNavigationState } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
 import {
@@ -27,7 +26,6 @@ export default function RootLayout() {
   const router = useRouter();
   const navigation = useNavigation();
   const segments = useSegments();
-  const navState = useNavigationState((state) => state);
 
   useEffect(() => {
     const backAction = () => {
@@ -73,7 +71,7 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>
-      <StatusBar style="dark" />
+      <StatusBar style="auto" />
     </AuthProvider>
   );
 }
