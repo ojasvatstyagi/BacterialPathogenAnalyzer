@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+//app/(auth)/register.tsx
+
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -7,6 +9,7 @@ import {
   Alert,
   Platform,
   KeyboardAvoidingView,
+  TextInput,
 } from "react-native";
 import { Link, router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -23,6 +26,7 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null); // New state for on-screen errors
   const [errors, setErrors] = useState<{
     firstName?: string;
     lastName?: string;
@@ -31,6 +35,12 @@ export default function RegisterScreen() {
     confirmPassword?: string;
   }>({});
   const { signUp } = useAuth();
+
+  // Refs for keyboard focus management
+  const lastNameRef = useRef<TextInput>(null);
+  const emailRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInput>(null);
+  const confirmPasswordRef = useRef<TextInput>(null);
 
   const validateForm = () => {
     const newErrors: {
@@ -76,9 +86,14 @@ export default function RegisterScreen() {
   };
 
   const handleSignUp = async () => {
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      setFormError(null); // Clear non-field error if field errors exist
+      return;
+    }
 
     setLoading(true);
+    setFormError(null); // Clear previous errors
+
     try {
       const fullName = `${firstName.trim()} ${lastName.trim()}`;
       const { error } = await signUp(email, password, {
@@ -88,11 +103,10 @@ export default function RegisterScreen() {
       });
 
       if (error) {
-        Alert.alert(
-          "Registration failed",
-          error.message || "Could not register"
-        );
+        // Display error on screen instead of Alert
+        setFormError(error.message || "Could not complete registration.");
       } else {
+        // Alert for success (as this action is complete and requires user action - email check)
         Alert.alert(
           "Account Created",
           "Please check your email and click the verification link to activate your account."
@@ -100,7 +114,10 @@ export default function RegisterScreen() {
         router.replace("/(auth)/login");
       }
     } catch (err: any) {
-      Alert.alert("Sign Up Error", err.message || "Something went wrong");
+      // Catch unexpected network/system errors
+      setFormError(
+        err.message || "An unexpected error occurred during sign up."
+      );
     } finally {
       setLoading(false);
     }
@@ -122,6 +139,7 @@ export default function RegisterScreen() {
           <ScrollView
             style={styles.formScrollContainer}
             contentContainerStyle={styles.formContent}
+            keyboardShouldPersistTaps="handled" // Improved keyboard handling
           >
             <Card>
               <Text style={styles.cardTitle}>Sign Up</Text>
@@ -135,6 +153,9 @@ export default function RegisterScreen() {
                   error={errors.firstName}
                   placeholder="First name"
                   containerStyle={styles.nameInput}
+                  // Focus management
+                  returnKeyType="next"
+                  onSubmitEditing={() => lastNameRef.current?.focus()}
                 />
                 <Input
                   label="Last Name"
@@ -145,6 +166,10 @@ export default function RegisterScreen() {
                   error={errors.lastName}
                   placeholder="Last name"
                   containerStyle={styles.nameInput}
+                  // Focus management
+                  ref={lastNameRef}
+                  returnKeyType="next"
+                  onSubmitEditing={() => emailRef.current?.focus()}
                 />
               </View>
               <Input
@@ -156,6 +181,10 @@ export default function RegisterScreen() {
                 autoComplete="email"
                 error={errors.email}
                 placeholder="Enter your email"
+                // Focus management
+                ref={emailRef}
+                returnKeyType="next"
+                onSubmitEditing={() => passwordRef.current?.focus()}
               />
               <Input
                 label="Password"
@@ -166,6 +195,10 @@ export default function RegisterScreen() {
                 autoComplete="new-password"
                 error={errors.password}
                 placeholder="Create a password"
+                // Focus management
+                ref={passwordRef}
+                returnKeyType="next"
+                onSubmitEditing={() => confirmPasswordRef.current?.focus()}
               />
               <Input
                 label="Confirm Password"
@@ -176,7 +209,12 @@ export default function RegisterScreen() {
                 autoComplete="new-password"
                 error={errors.confirmPassword}
                 placeholder="Confirm your password"
+                // Focus management
+                ref={confirmPasswordRef}
+                returnKeyType="done"
+                onSubmitEditing={handleSignUp}
               />
+              {formError && <Text style={styles.errorText}>{formError}</Text>}
               <Button
                 title={loading ? "Creating..." : "Sign Up"}
                 onPress={handleSignUp}
@@ -243,6 +281,13 @@ const styles = StyleSheet.create({
   },
   nameInput: {
     flex: 1,
+  },
+  errorText: {
+    ...typography.body,
+    color: colors.error,
+    textAlign: "center",
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
   },
   footer: {
     alignItems: "center",

@@ -16,9 +16,7 @@ export default function NotFoundScreen() {
         </Text>
         <Link href="/" asChild>
           <View style={styles.linkButton}>
-            <Text style={styles.linkText} onPress={() => router.back()}>
-              Go Back
-            </Text>
+            <Text style={styles.linkText}>Go to Home Screen</Text>
           </View>
         </Link>
       </View>
