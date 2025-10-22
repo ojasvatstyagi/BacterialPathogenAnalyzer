@@ -1,7 +1,8 @@
+// app/(tabs)/_layout.tsx
+
 import { Tabs } from "expo-router";
 import { Home, Microscope, History, User } from "lucide-react-native";
-import { colors } from "@/constants/theme";
-import { Platform } from "react-native";
+import { colors, spacing, typography } from "@/constants/theme";
 
 export default function TabLayout() {
   return (
@@ -9,25 +10,18 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.disabled,
+        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarShowLabel: true,
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopWidth: 0,
-          // iOS Shadow
-          shadowColor: "transparent",
-          shadowOffset: { width: 0, height: 0 },
-          shadowOpacity: 0,
-          shadowRadius: 0,
-          // Android Elevation
-          elevation: 0,
-          paddingTop: 8,
-          paddingBottom: 8,
-          height: 70,
+          paddingVertical: spacing.sm,
+          minHeight: 65,
         },
+        tabBarIconStyle: {},
         tabBarLabelStyle: {
-          fontSize: 12,
-          fontFamily: "Inter-Regular",
-          marginTop: 4,
+          ...typography.caption,
+          marginBottom: 0,
         },
       }}
     >
@@ -35,32 +29,28 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Home",
-          tabBarIcon: ({ size, color }) => <Home size={size} color={color} />,
+          tabBarIcon: ({ size, color }) => <Home size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="analyze"
         options={{
           title: "Analyze",
-          tabBarIcon: ({ size, color }) => (
-            <Microscope size={size} color={color} />
-          ),
+          tabBarIcon: ({ color }) => <Microscope size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="history"
         options={{
           title: "History",
-          tabBarIcon: ({ size, color }) => (
-            <History size={size} color={color} />
-          ),
+          tabBarIcon: ({ color }) => <History size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",
-          tabBarIcon: ({ size, color }) => <User size={size} color={color} />,
+          tabBarIcon: ({ color }) => <User size={24} color={color} />,
         }}
       />
     </Tabs>
