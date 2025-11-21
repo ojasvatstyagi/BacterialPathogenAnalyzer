@@ -104,19 +104,27 @@ export default function RegisterScreen() {
 
       if (error) {
         // Display error on screen instead of Alert
-        setFormError(error.message || "Could not complete registration.");
+        console.error("Signup error:", error);
+        setFormError(error.message || "Registration failed. Please try again.");
       } else {
         // Alert for success (as this action is complete and requires user action - email check)
         Alert.alert(
           "Account Created",
-          "Please check your email and click the verification link to activate your account."
+          "Registration successful! Please check your email and click the verification link to activate your account. You may need to check your spam folder.",
+          [
+            {
+              text: "OK",
+              onPress: () => router.replace("/(auth)/login"),
+            },
+          ]
         );
-        router.replace("/(auth)/login");
       }
     } catch (err: any) {
       // Catch unexpected network/system errors
+      console.error("Registration error:", err);
       setFormError(
-        err.message || "An unexpected error occurred during sign up."
+        err.message ||
+          "Registration failed. Please check your connection and try again."
       );
     } finally {
       setLoading(false);

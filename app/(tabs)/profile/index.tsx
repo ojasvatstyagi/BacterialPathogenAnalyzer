@@ -12,10 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import {
   User,
   Mail,
-  CircleHelp as HelpCircle,
-  Shield,
-  LogOut,
-  Trash2,
+  Circle as HelpCircle,
   FileText,
   Bell,
   ChevronRight,
@@ -25,7 +22,7 @@ import { Card } from "@/components/ui/Card";
 import { useAuth } from "@/context/AuthContext";
 import { colors, typography, spacing } from "@/constants/theme";
 import { supabase } from "@/lib/supabase";
-import FileSystem, { File } from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 
 export default function ProfileScreen() {
@@ -100,11 +97,13 @@ export default function ProfileScreen() {
       }
 
       const fileUri = `${FileSystem.documentDirectory}analysis_data.txt`;
-      const file = new File(fileUri);
-      await file.write(fileContent, { encoding: "utf8" });
+      await FileSystem.writeAsStringAsync(fileUri, fileContent, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
 
+      // Share the file
       if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(file.uri, {
+        await Sharing.shareAsync(fileUri, {
           mimeType: "text/plain",
           dialogTitle: "Share Analysis Data",
         });
@@ -341,7 +340,7 @@ export default function ProfileScreen() {
           />
 
           <ProfileOption
-            icon={Trash2}
+            icon={User}
             title="Delete Account"
             subtitle="Permanently delete your account and data"
             onPress={handleDeleteAccount}
