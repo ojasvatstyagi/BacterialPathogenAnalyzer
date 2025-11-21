@@ -4,16 +4,12 @@ import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
-import { File } from "expo-file-system";
-import "react-native-url-polyfill/auto";
+// Use legacy FileSystem API to avoid deprecation warnings
+import * as FileSystem from "expo-file-system/legacy";
+
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
-import {
-  Camera,
-  Upload,
-  RotateCcw,
-  Image as ImageIcon,
-} from "lucide-react-native";
+import { Camera, RotateCcw, Image as ImageIcon } from "lucide-react-native";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { TopBar } from "@/components/ui/TopBar";
@@ -71,7 +67,7 @@ export default function CaptureScreen() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      aspect: [1, 1],
+      aspect: [1, 1], // Enforce 1:1 aspect ratio for analysis
       quality: 0.8,
     });
 
@@ -88,16 +84,25 @@ export default function CaptureScreen() {
     if (!capturedImage || !user) return;
 
     setUploading(true);
+
     try {
       const fileName = `${user.id}/${Date.now()}.jpg`;
       const contentType = "image/jpeg";
 
-      const imageFile = new File(capturedImage);
-      const arrayBuffer = await imageFile.arrayBuffer();
+      // 1. Read the file into Base64 format
+      // 💡 FIX: Replaced FileSystem.EncodingType.Base64 with the string literal 'base64'
+      const base64Data = await FileSystem.readAsStringAsync(capturedImage, {
+        encoding: "base64",
+      });
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      // 2. Convert Base64 string to a Uint8Array (required by Supabase for Raw upload)
+      // This helper function relies on the global 'atob' being available/polyfilled.
+      const rawData = decode(base64Data);
+
+      // 3. Upload the Uint8Array (rawData) to Supabase Storage
+      const { error: uploadError } = await supabase.storage
         .from("colony-images")
-        .upload(fileName, arrayBuffer, {
+        .upload(fileName, rawData, {
           contentType,
           upsert: false,
         });
@@ -106,6 +111,7 @@ export default function CaptureScreen() {
         throw uploadError;
       }
 
+      // 4. Create a Signed URL for the next step to access
       const { data: urlData, error: urlError } = await supabase.storage
         .from("colony-images")
         .createSignedUrl(fileName, 60 * 60); // 1 hour expiry
@@ -114,8 +120,9 @@ export default function CaptureScreen() {
         throw urlError;
       }
 
+      // 5. Navigate to the next step with the signed URL
       router.push({
-        pathname: "/(tabs)/analyze/colony-age",
+        pathname: "/analyze/colony-age",
         params: {
           characteristics: JSON.stringify(characteristics),
           medium,
@@ -127,9 +134,11 @@ export default function CaptureScreen() {
         error instanceof Error
           ? error.message
           : "An unknown error occurred during upload.";
-      Alert.alert("Upload Error", `Failed to upload image: ${errorMessage}`, [
-        { text: "OK" },
-      ]);
+      Alert.alert(
+        "Upload Error",
+        `Failed to upload image: ${errorMessage}. Please try again.`,
+        [{ text: "OK" }]
+      );
       console.error(
         "Detailed upload error:",
         JSON.stringify(error, Object.getOwnPropertyNames(error), 2)
@@ -139,6 +148,26 @@ export default function CaptureScreen() {
     }
   };
 
+  // Helper function to decode Base64 string into a Uint8Array
+  const decode = (base64: string): Uint8Array => {
+    // Check for the global 'atob' which is available in most RN/Expo/Web environments
+    if (typeof atob === "function") {
+      const binaryString = atob(base64);
+      const len = binaryString.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      return bytes;
+    }
+    // Fallback/Error case if 'atob' is missing (should not happen in Expo Go or most RN)
+    console.error(
+      "The global 'atob' function is not available for Base64 decoding."
+    );
+    return new Uint8Array(0);
+  };
+
+  // Permission UI
   if (!permission) {
     return (
       <SafeAreaView style={styles.container}>
@@ -148,7 +177,9 @@ export default function CaptureScreen() {
           onBack={handleBack}
         />
         <View style={styles.permissionContainer}>
-          <Text style={styles.permissionText}>Loading camera...</Text>
+          <Text style={styles.permissionText}>
+            Loading camera permissions...
+          </Text>
         </View>
       </SafeAreaView>
     );
@@ -170,7 +201,8 @@ export default function CaptureScreen() {
             <Text style={styles.permissionTitle}>Camera Access Required</Text>
             <Text style={styles.permissionText}>
               We need access to your camera to capture images of bacterial
-              colonies for analysis.
+              colonies for analysis. You can also select an image from your
+              gallery.
             </Text>
             <Button
               title="Grant Camera Permission"
@@ -189,6 +221,7 @@ export default function CaptureScreen() {
     );
   }
 
+  // Review UI
   if (capturedImage) {
     return (
       <SafeAreaView style={styles.container}>
@@ -213,6 +246,7 @@ export default function CaptureScreen() {
                 title="Retake"
                 onPress={retakePhoto}
                 variant="secondary"
+                disabled={uploading}
                 style={styles.actionButton}
               />
               <Button
@@ -228,6 +262,7 @@ export default function CaptureScreen() {
     );
   }
 
+  // Live Camera UI
   return (
     <SafeAreaView style={styles.container}>
       <TopBar
@@ -254,14 +289,16 @@ export default function CaptureScreen() {
         ) : (
           <CameraView ref={cameraRef} style={styles.camera} facing={facing}>
             <View style={styles.cameraOverlay}>
+              {/* Camera Top Info Card */}
               <View style={styles.cameraTop}>
                 <Card style={styles.infoCard}>
                   <Text style={styles.infoText}>
-                    Position bacterial colonies in the center of the frame
+                    Position colonies in the center for a square capture
                   </Text>
                 </Card>
               </View>
 
+              {/* Camera Bottom Controls */}
               <View style={styles.cameraBottom}>
                 {/* Gallery Button */}
                 <View style={styles.controlButton}>
@@ -288,7 +325,7 @@ export default function CaptureScreen() {
                       style={styles.captureButton}
                     />
                     <View style={styles.captureIcon}>
-                      <Camera size={28} color={colors.text} />
+                      <Camera size={28} color={colors.surface} />
                     </View>
                   </View>
                   <Text style={styles.captureLabel}>Capture</Text>
@@ -380,6 +417,8 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     maxWidth: 300,
     backgroundColor: "rgba(255, 255, 255, 0.95)",
+    borderColor: colors.border,
+    borderWidth: 1,
   },
   infoText: {
     ...typography.caption,
@@ -406,6 +445,7 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     backgroundColor: "rgba(255, 255, 255, 0.9)",
     borderColor: "rgba(255, 255, 255, 0.3)",
+    borderWidth: 1,
   },
   buttonIcon: {
     position: "absolute",
@@ -440,7 +480,7 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     backgroundColor: colors.primary,
     borderWidth: 4,
-    borderColor: "rgba(255, 255, 255, 0.8)",
+    borderColor: colors.surface,
   },
   captureIcon: {
     position: "absolute",
@@ -451,6 +491,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     pointerEvents: "none",
+    padding: 10,
   },
   captureLabel: {
     ...typography.caption,
@@ -485,6 +526,17 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: spacing.md,
     marginBottom: spacing.lg,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 5,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
   },
   previewActions: {
     alignItems: "center",
