@@ -1,61 +1,79 @@
 # Bacterial Pathogen Analyzer
 
-A professional mobile application for identifying Burkholderia pseudomallei bacteria using React Native, Supabase, and machine learning analysis.
+A professional mobile application for identifying Burkholderia pseudomallei bacteria using React Native, Expo, Supabase, and AI-powered analysis. Built for laboratory technicians and medical professionals.
 
-## Features
+## 🔬 Overview
 
-### 🔬 Core Functionality
+The Bacterial Pathogen Analyzer is a comprehensive diagnostic tool designed to assist healthcare professionals in identifying Burkholderia pseudomallei, the causative agent of melioidosis. The application provides a guided workflow for bacterial analysis, image capture, and AI-powered identification with confidence scoring.
 
-- **Multi-step Analysis Workflow**: Guided process for bacterial characteristic selection and culture media identification
-- **Camera Integration**: Capture high-quality images of bacterial colonies using device camera
-- **Mock AI Analysis**: Simulated machine learning analysis with configurable confidence scores
-- **Comprehensive Reporting**: Generate detailed reports with characteristics, media, images, and results
-- **Analysis History**: View and filter past analyses with search capabilities
+## ✨ Features
+
+### 🧪 Core Functionality
+
+- **Multi-step Analysis Workflow**: Guided 4-step process for bacterial identification
+  - Bacterial characteristics selection
+  - Culture medium identification
+  - High-quality image capture
+  - Colony age specification
+- **Camera Integration**: Native camera support with gallery fallback
+- **AI-Powered Analysis**: Mock ML analysis with configurable confidence scores (ready for production ML integration)
+- **Comprehensive Reporting**: Detailed analysis reports with images and metadata
+- **Analysis History**: Complete history with filtering and search capabilities
+- **Data Export**: Export analysis data for external review
 
 ### 🔐 Authentication & Security
 
-- **Supabase Authentication**: Email/password and Google OAuth integration
-- **Secure Data Storage**: All data encrypted and stored in Supabase PostgreSQL
+- **Supabase Authentication**: Email/password registration and login
+- **Row Level Security (RLS)**: Database-level security for user data isolation
+- **Secure Image Storage**: Encrypted image storage with signed URLs
 - **User Session Management**: Automatic token refresh and session persistence
-- **Access Control**: Role-based access for lab technicians and clinicians
+- **Account Management**: Profile editing, password updates, and account deletion
 
 ### 📱 User Experience
 
-- **Professional Design**: Clean, medical-grade interface with lime accent colors
-- **Accessibility**: WCAG 2.1 compliant with high contrast ratios
+- **Professional Design**: Medical-grade interface with lime accent colors
+- **Accessibility**: High contrast ratios and readable typography
 - **Cross-platform**: Native iOS and Android support via React Native
+- **Responsive Design**: Optimized for various screen sizes
 - **Offline Capability**: Local data caching for network resilience
 
-## Technology Stack
+### 🎨 Design System
+
+- **Custom Theme**: Professional lime (#B6E92D) and white-smoke (#F2F2F2) color palette
+- **Inter Font Family**: Optimized for medical/scientific readability
+- **Modular Components**: Reusable UI components with consistent styling
+- **Micro-interactions**: Smooth animations and transitions
+
+## 🛠 Technology Stack
 
 ### Frontend
 
-- **React Native 0.79** with TypeScript
-- **Expo SDK 53** for rapid development and deployment
-- **Expo Router** for file-based navigation
+- **React Native 0.81.4** with TypeScript
+- **Expo SDK 54** for rapid development and deployment
+- **Expo Router 6.0** for file-based navigation
 - **React Native Reanimated** for smooth animations
-- **Expo Camera** for image capture functionality
+- **Expo Camera 17.0** for image capture functionality
+- **Lucide React Native** for consistent iconography
 
-### Backend
+### Backend & Database
 
-- **Node.js + Express.js** for API endpoints
 - **Supabase** for authentication, database, and storage
-- **PostgreSQL** for structured data storage
+- **PostgreSQL** with Row Level Security (RLS)
 - **Real-time subscriptions** for live data updates
+- **Supabase Storage** for secure image handling
 
-### Design System
+### Development Tools
 
-- **Custom theme** with professional lime and white-smoke colors
-- **Inter font family** for optimal readability
-- **Modular components** with consistent spacing and shadows
-- **Responsive layouts** for multiple screen sizes
+- **TypeScript** for type safety
+- **Expo CLI** for development workflow
+- **ESLint & Prettier** for code quality
 
-## Quick Start
+## 🚀 Quick Start
 
 ### Prerequisites
 
 - Node.js 18+ and npm
-- React Native development environment
+- Expo CLI (`npm install -g @expo/cli`)
 - iOS Simulator (macOS) or Android Studio
 - Supabase account
 
@@ -64,217 +82,307 @@ A professional mobile application for identifying Burkholderia pseudomallei bact
 1. **Clone and install dependencies**
 
 ```bash
-git clone <repository-url>
-cd bacterial-pathogen-analyzer
+git clone https://github.com/ojasvatstyagi/BacterialPathogenAnalyzer.git
+cd BacterialPathogenAnalyzer
 npm install
 ```
 
-2. **Set up Supabase**
-   - Create a new project at [supabase.com](https://supabase.com)
-   - Copy your project URL and anon key
-   - Update `.env` file with your credentials:
+2. **Environment Setup**
+   Create a `.env` file in the root directory:
 
 ```env
-EXPO_PUBLIC_SUPABASE_URL=your_supabase_url_here
-EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key_here
+EXPO_PUBLIC_SUPABASE_URL=your_supabase_project_url
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 EXPO_PUBLIC_API_URL=http://localhost:3001
 ```
 
-3. **Initialize Database**
-   Run these SQL commands in your Supabase SQL editor:
+3. **Supabase Configuration**
+
+#### Database Setup
+
+The application includes pre-built migrations. Run these in your Supabase SQL editor:
 
 ```sql
--- Create analyses table
-CREATE TABLE analyses (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  characteristics TEXT[] NOT NULL,
-  culture_medium TEXT NOT NULL,
-  image_url TEXT,
-  result TEXT,
-  confidence DECIMAL(3,2),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Enable Row Level Security
-ALTER TABLE analyses ENABLE ROW LEVEL SECURITY;
-
--- Create policy for authenticated users
-CREATE POLICY "Users can manage their own analyses" ON analyses
-  FOR ALL USING (auth.uid() = user_id);
-
--- Create storage bucket for images
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('colony-images', 'colony-images', false);
-
--- Create storage policy
-CREATE POLICY "Users can upload their own images" ON storage.objects
-  FOR INSERT WITH CHECK (bucket_id = 'colony-images' AND auth.uid()::text = (storage.foldername(name))[1]);
+-- The migrations are located in supabase/migrations/
+-- Run them in order:
+-- 1. 20250622041524_foggy_lantern.sql (main schema)
+-- 2. 20250902120536_graceful_moon.sql (colony age column)
+-- 3. 20250915191000_add_delete_user_function.sql (user deletion)
 ```
 
-4. **Start the backend server**
+#### Authentication Settings
+
+1. Go to Supabase Dashboard → Authentication → Settings
+2. **Email Confirmations**: Enable if you want email verification
+3. **Site URL**: Set to your app's URL (development: `exp://localhost:8081`)
+4. **SMTP Settings**: Configure for production email delivery
+
+#### Storage Setup
+
+1. Go to Storage in Supabase Dashboard
+2. The `colony-images` bucket is created automatically via migration
+3. Verify RLS policies are in place for user data isolation
+
+4. **Start Development**
 
 ```bash
-npm run server
-```
-
-5. **Start the Expo development server**
-
-```bash
+# Start the development server
 npm run dev
+
+# For specific platforms
+npm run ios     # iOS simulator
+npm run android # Android emulator
+npm run web     # Web browser
 ```
 
-6. **Run on device/simulator**
-   - Install Expo Go app on your phone
-   - Scan the QR code displayed in terminal
-   - Or press `i` for iOS simulator, `a` for Android emulator
-
-## Project Structure
+## 📁 Project Structure
 
 ```
 bacterial-pathogen-analyzer/
-├── app/                     # Expo Router pages
-│   ├── (auth)/             # Authentication screens
-│   ├── (tabs)/             # Main app tabs
-│   └── _layout.tsx         # Root layout
-├── components/             # Reusable UI components
-│   └── ui/                # Base UI components
-├── constants/              # App constants and theme
-├── context/               # React context providers
-├── lib/                   # Utility libraries
-├── server/                # Backend API server
-├── types/                 # TypeScript type definitions
+├── app/                          # Expo Router pages
+│   ├── (auth)/                  # Authentication screens
+│   │   ├── login.tsx           # Login screen
+│   │   ├── register.tsx        # Registration screen
+│   │   └── _layout.tsx         # Auth layout
+│   ├── (tabs)/                 # Main app tabs
+│   │   ├── index.tsx           # Home dashboard
+│   │   ├── analyze/            # Analysis workflow
+│   │   │   ├── index.tsx       # Analysis start
+│   │   │   ├── characteristics.tsx
+│   │   │   ├── media.tsx
+│   │   │   ├── capture.tsx
+│   │   │   ├── colony-age.tsx
+│   │   │   └── results.tsx
+│   │   ├── history.tsx         # Analysis history
+│   │   ├── profile/            # User profile
+│   │   │   ├── index.tsx
+│   │   │   └── edit-profile.tsx
+│   │   └── _layout.tsx         # Tab layout
+│   ├── _layout.tsx             # Root layout
+│   └── +not-found.tsx          # 404 page
+├── components/                  # Reusable components
+│   └── ui/                     # Base UI components
+│       ├── Button.tsx
+│       ├── Card.tsx
+│       ├── Checkbox.tsx
+│       ├── Input.tsx
+│       └── TopBar.tsx
+├── constants/                   # App constants
+│   └── theme.ts                # Design system
+├── context/                     # React context
+│   └── AuthContext.tsx         # Authentication state
+├── hooks/                       # Custom hooks
+│   └── useFrameworkReady.ts    # Framework initialization
+├── lib/                        # Utility libraries
+│   └── supabase.ts            # Supabase client
+├── server/                     # Mock API server
+│   └── index.js               # Express server for development
+├── supabase/                   # Database migrations
+│   └── migrations/            # SQL migration files
+├── types/                      # TypeScript definitions
+│   └── env.d.ts               # Environment types
 └── README.md
 ```
 
-## API Endpoints
-
-The backend provides several mock endpoints for development:
-
-### `POST /api/analyze-image`
-
-Analyzes bacterial colony images and returns identification results.
-
-**Request**: Multipart form with image file
-**Response**:
-
-```json
-{
-  "result": "Probably Burkholderia pseudomallei",
-  "confidence": 0.92,
-  "analysisId": "analysis_1234567890_abc123",
-  "timestamp": "2024-01-15T10:30:00Z",
-  "details": {
-    "morphology": "Gram-negative bacilli with characteristic bipolar appearance",
-    "biochemical": "Oxidase positive, consistent with B. pseudomallei",
-    "recommendation": "Further confirmation recommended through molecular methods"
-  }
-}
-```
-
-### `POST /api/send-report`
-
-Sends analysis reports to laboratory for review.
-
-**Request**:
-
-```json
-{
-  "characteristics": [
-    "Gram Negative bacilli",
-    "Bipolar appearance",
-    "Oxidase positive"
-  ],
-  "medium": "Ashdown Agar",
-  "result": "Probably Burkholderia pseudomallei",
-  "confidence": 0.92,
-  "userId": "user-id"
-}
-```
-
-**Response**:
-
-```json
-{
-  "reportId": "report_1234567890_xyz789",
-  "status": "sent",
-  "sentTo": "laboratory@hospital.com",
-  "priority": "high",
-  "estimatedReviewTime": "2-4 hours"
-}
-```
-
-## Development Workflow
-
-### Adding New Features
-
-1. Create feature branch: `git checkout -b feature/new-feature`
-2. Implement changes following existing patterns
-3. Test on iOS and Android
-4. Update documentation
-5. Create pull request
-
-### Testing
-
-- **Manual Testing**: Test on iOS and Android simulators
-- **API Testing**: Use provided endpoints for development
-- **Database Testing**: Verify Supabase integration
-- **Authentication Testing**: Test login/logout flows
-
-### Deployment
-
-1. **Frontend**: Use Expo's build service for app store deployment
-2. **Backend**: Deploy Node.js server to your preferred platform
-3. **Database**: Supabase handles hosting and scaling automatically
-
-## Configuration
+## 🔧 Configuration
 
 ### Environment Variables
 
 ```env
-# Supabase Configuration
-EXPO_PUBLIC_SUPABASE_URL=your_supabase_url
+# Required - Supabase Configuration
+EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 
-# API Configuration
+# Optional - Development API
 EXPO_PUBLIC_API_URL=http://localhost:3001
 
-# Optional: Google OAuth (for production)
-GOOGLE_CLIENT_ID=your_google_client_id
+# Production - Additional configurations
+EXPO_PUBLIC_SENTRY_DSN=your_sentry_dsn
+EXPO_PUBLIC_ANALYTICS_ID=your_analytics_id
 ```
 
 ### Supabase Setup Checklist
 
 - [ ] Create new Supabase project
-- [ ] Run database schema SQL
-- [ ] Configure authentication providers
-- [ ] Set up storage bucket with policies
-- [ ] Update RLS policies for your needs
-- [ ] Configure OAuth providers (optional)
+- [ ] Run database migrations in order
+- [ ] Configure authentication settings
+- [ ] Set up SMTP for email delivery (production)
+- [ ] Configure storage bucket policies
+- [ ] Set up Row Level Security policies
+- [ ] Configure site URL and redirect URLs
 
-## Future Enhancements
+## 🧪 Analysis Workflow
 
-### Python ML Integration
+### Step 1: Bacterial Characteristics
 
-The app is designed to integrate with a Python machine learning microservice:
+- **Required**: Gram Negative bacilli, Oxidase positive
+- **Optional**: Bipolar appearance
+- Progress tracking with validation
 
-1. **Replace Mock API**: Update `/api/analyze-image` to call Python service
-2. **Image Processing**: Add preprocessing pipeline for colony images
-3. **Model Training**: Implement continuous learning from new samples
-4. **Confidence Calibration**: Fine-tune confidence scoring
+### Step 2: Culture Medium Selection
 
-### Example Python Integration:
+- Blood Agar
+- MacConkey Agar
+- Nutrient Agar
+- Ashdown Agar (recommended for B. pseudomallei)
+
+### Step 3: Image Capture
+
+- Native camera integration
+- Gallery selection fallback
+- Image quality validation
+- Secure upload to Supabase Storage
+
+### Step 4: Colony Age Specification
+
+- 24 hours (young colonies)
+- 48 hours (optimal for analysis)
+- 72 hours (well-developed)
+- 96 hours (older colonies)
+
+### Results & Analysis
+
+- AI-powered identification (mock implementation)
+- Confidence scoring (80-95% range)
+- Detailed analysis summary
+- Save to history or send to laboratory
+
+## 🔒 Security Features
+
+### Authentication
+
+- Email/password authentication via Supabase Auth
+- Secure session management with automatic refresh
+- Password strength validation
+- Account verification (configurable)
+
+### Data Protection
+
+- Row Level Security (RLS) for all user data
+- Encrypted image storage with signed URLs
+- User data isolation at database level
+- Secure API endpoints with authentication
+
+### Privacy
+
+- User data export functionality
+- Complete account deletion
+- GDPR-compliant data handling
+- No third-party tracking (configurable)
+
+## 📊 Database Schema
+
+### Tables
+
+#### `analyses`
+
+- `id` (UUID, Primary Key)
+- `user_id` (UUID, Foreign Key → auth.users)
+- `characteristics` (Text Array)
+- `culture_medium` (Text)
+- `colony_age` (Text)
+- `image_url` (Text, Nullable)
+- `result` (Text, Nullable)
+- `confidence` (Decimal, 0.0-1.0)
+- `created_at` (Timestamp)
+
+### Storage Buckets
+
+- `colony-images`: Secure storage for bacterial colony images
+
+### Functions
+
+- `get_user_analysis_stats()`: User statistics aggregation
+- `delete_user()`: Complete user data deletion
+
+## 🚀 Deployment
+
+### Mobile App Deployment
+
+#### iOS App Store
+
+```bash
+# Build for iOS
+eas build --platform ios --profile production
+
+# Submit to App Store
+eas submit --platform ios
+```
+
+#### Google Play Store
+
+```bash
+# Build for Android
+eas build --platform android --profile production
+
+# Submit to Play Store
+eas submit --platform android
+```
+
+### Backend Deployment
+
+- **Database**: Supabase (managed PostgreSQL)
+- **Storage**: Supabase Storage (S3-compatible)
+- **Authentication**: Supabase Auth
+- **API**: Mock server for development (replace with production ML service)
+
+### Environment Configuration
+
+#### Development
+
+```json
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "f144ea13-2608-4503-9bee-09221635cb32"
+      }
+    }
+  }
+}
+```
+
+#### Production
+
+- Configure production Supabase project
+- Set up custom SMTP for email delivery
+- Configure analytics and error tracking
+- Set up CI/CD pipeline with EAS
+
+## 🧪 Testing
+
+### Manual Testing Checklist
+
+- [ ] User registration and login
+- [ ] Complete analysis workflow
+- [ ] Image capture and upload
+- [ ] Analysis history and filtering
+- [ ] Profile management
+- [ ] Data export functionality
+- [ ] Account deletion
+
+### Platform Testing
+
+- [ ] iOS simulator testing
+- [ ] Android emulator testing
+- [ ] Physical device testing
+- [ ] Web browser compatibility (limited)
+
+## 🔮 Future Enhancements
+
+### Machine Learning Integration
+
+Replace mock analysis with production ML service:
 
 ```python
-# ml_service.py
+# Example Python ML service integration
 from fastapi import FastAPI, File, UploadFile
 import tensorflow as tf
-import numpy as np
 
 app = FastAPI()
 
 @app.post("/analyze")
-async def analyze_image(file: UploadFile = File(...)):
+async def analyze_colony(file: UploadFile = File(...)):
     # Load and preprocess image
     image = await file.read()
     processed = preprocess_image(image)
@@ -285,24 +393,70 @@ async def analyze_image(file: UploadFile = File(...)):
 
     result = "Probably Burkholderia pseudomallei" if prediction[0] > 0.5 else "Not Burkholderia pseudomallei"
 
-    return {"result": result, "confidence": confidence}
+    return {
+        "result": result,
+        "confidence": confidence,
+        "details": {
+            "morphology": "Analysis details...",
+            "biochemical": "Biochemical profile...",
+            "recommendation": "Clinical recommendations..."
+        }
+    }
 ```
 
-## Support
+### Advanced Features
 
-For technical support or questions:
+- **Laboratory Integration**: LIMS system connectivity
+- **Batch Processing**: Multiple sample analysis
+- **Quality Control**: Internal standards and controls
+- **Reporting**: PDF report generation
+- **Collaboration**: Multi-user laboratory workflows
+- **Audit Trail**: Complete analysis tracking
+- **Offline Mode**: Full offline capability with sync
 
-- Review the documentation in this README
-- Check the GitHub issues page
-- Contact your laboratory administrator
-- Email: support@bacterial-analyzer.com
+### Analytics & Monitoring
 
-## License
+- **Usage Analytics**: User behavior tracking
+- **Performance Monitoring**: App performance metrics
+- **Error Tracking**: Crash reporting and debugging
+- **A/B Testing**: Feature experimentation
+
+## 📞 Support & Maintenance
+
+### Technical Support
+
+- **Email**: ojas.vats.tyagi@gmail.com
+- **Documentation**: In-app help system
+- **Issue Tracking**: GitHub Issues
+
+### Maintenance Schedule
+
+- **Security Updates**: Monthly
+- **Feature Updates**: Quarterly
+- **Database Maintenance**: Automated via Supabase
+- **Performance Monitoring**: Continuous
+
+### Backup & Recovery
+
+- **Database**: Automated daily backups via Supabase
+- **Images**: Redundant storage with Supabase Storage
+- **User Data**: Export functionality for data portability
+
+## 📄 License
 
 This project is licensed under the MIT License. See LICENSE file for details.
+
+## 🙏 Acknowledgments
+
+- **Supabase**: Backend infrastructure and authentication
+- **Expo**: React Native development platform
+- **Lucide**: Icon library
+- **Inter Font**: Typography design
 
 ---
 
 **Bacterial Pathogen Analyzer v1.0.0**  
 Professional diagnostic tool for laboratory use  
-Built with React Native, Supabase, and modern web technologies
+Built with React Native, Expo, Supabase, and modern web technologies
+
+For technical documentation and API references, see the `/docs` directory.
