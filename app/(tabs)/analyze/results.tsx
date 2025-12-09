@@ -1,20 +1,20 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView, Image, Alert } from "react-native";
-import { router, useLocalSearchParams } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, Image, Alert } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   CircleCheck as CheckCircle,
   Circle as XCircle,
   Share,
   Save,
   SendHorizontal as SendHorizonal,
-} from "lucide-react-native";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { TopBar } from "@/components/ui/TopBar";
-import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/lib/supabase";
-import { colors, typography, spacing } from "@/constants/theme";
+} from 'lucide-react-native';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { TopBar } from '@/components/ui/TopBar';
+import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/lib/supabase';
+import { colors, typography, spacing } from '@/constants/theme';
 
 interface AnalysisResult {
   result: string;
@@ -22,10 +22,10 @@ interface AnalysisResult {
 }
 
 const COLONY_AGES = [
-  { value: "24h", label: "24 hours" },
-  { value: "48h", label: "48 hours" },
-  { value: "72h", label: "72 hours" },
-  { value: "96h", label: "96 hours" },
+  { value: '24h', label: '24 hours' },
+  { value: '48h', label: '48 hours' },
+  { value: '72h', label: '72 hours' },
+  { value: '96h', label: '96 hours' },
 ];
 
 export default function ResultsScreen() {
@@ -54,8 +54,8 @@ export default function ResultsScreen() {
     try {
       // Mock API call - in production, this would call your backend
       const mockResults = [
-        { result: "Probably Burkholderia pseudomallei", confidence: 0.9 },
-        { result: "Not Burkholderia pseudomallei", confidence: 0.85 },
+        { result: 'Probably Burkholderia pseudomallei', confidence: 0.9 },
+        { result: 'Not Burkholderia pseudomallei', confidence: 0.85 },
       ];
 
       // Randomly select a result for demonstration
@@ -71,7 +71,7 @@ export default function ResultsScreen() {
         confidence: Math.min(0.95, Math.max(0.8, confidence)),
       });
     } catch (error) {
-      Alert.alert("Error", "Failed to analyze image. Please try again.");
+      Alert.alert('Error', 'Failed to analyze image. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -82,7 +82,7 @@ export default function ResultsScreen() {
 
     setSaving(true);
     try {
-      const { error } = await supabase.from("analyses").insert({
+      const { error } = await supabase.from('analyses').insert({
         user_id: user.id,
         characteristics,
         culture_medium: medium,
@@ -95,25 +95,25 @@ export default function ResultsScreen() {
       if (error) throw error;
 
       Alert.alert(
-        "Report Saved",
-        "Your analysis report has been saved successfully.",
+        'Report Saved',
+        'Your analysis report has been saved successfully.',
         [
           {
-            text: "Stay Here",
-            style: "cancel",
+            text: 'Stay Here',
+            style: 'cancel',
             onPress: () => {
               // Just close the dialog, stay on results screen
             },
           },
           {
-            text: "View History",
-            onPress: () => router.replace("/(tabs)/history"),
+            text: 'View History',
+            onPress: () => router.replace('/(tabs)/history'),
           },
         ]
       );
     } catch (error) {
-      console.error("Save error:", error);
-      Alert.alert("Error", "Failed to save report. Please try again.");
+      console.error('Save error:', error);
+      Alert.alert('Error', 'Failed to save report. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -136,18 +136,18 @@ export default function ResultsScreen() {
       };
 
       // In production, this would call your /api/send-report endpoint
-      console.log("Sending report to lab:", reportData);
+      console.log('Sending report to lab:', reportData);
 
       // Simulate API delay
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       Alert.alert(
-        "Report Sent",
-        "Your analysis report has been sent to the laboratory for review.",
-        [{ text: "OK" }]
+        'Report Sent',
+        'Your analysis report has been sent to the laboratory for review.',
+        [{ text: 'OK' }]
       );
     } catch (error) {
-      Alert.alert("Error", "Failed to send report to lab. Please try again.");
+      Alert.alert('Error', 'Failed to send report to lab. Please try again.');
     } finally {
       setSending(false);
     }
@@ -156,13 +156,13 @@ export default function ResultsScreen() {
   const handleNewAnalysis = () => {
     // Clear the entire analysis stack and go to analyze home
     router.dismissAll();
-    router.replace("/(tabs)/analyze");
+    router.replace('/(tabs)/analyze');
   };
 
   const handleHome = () => {
     // Clear the entire analysis stack and go to home
     router.dismissAll();
-    router.replace("/(tabs)");
+    router.replace('/(tabs)');
   };
 
   const handleBack = () => {
@@ -200,7 +200,7 @@ export default function ResultsScreen() {
     );
   }
 
-  const isPositive = analysisResult.result.includes("Probably");
+  const isPositive = analysisResult.result.includes('Probably');
   const confidencePercentage = Math.round(analysisResult.confidence * 100);
   const colonyAgeLabel =
     COLONY_AGES.find((age) => age.value === colonyAge)?.label || colonyAge;
@@ -286,6 +286,10 @@ export default function ResultsScreen() {
 
         <Card style={styles.actionsCard}>
           <Text style={styles.actionsTitle}>Next Steps</Text>
+          <Text style={typography.body}>
+            Please save this report to your history by clicking "Save Report"
+            and send it to the laboratory for further review.
+          </Text>
 
           <View style={styles.actionButtons}>
             <Button
@@ -345,20 +349,20 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     padding: spacing.lg,
   },
   loadingContent: {
-    alignItems: "center",
+    alignItems: 'center',
   },
   loadingIcon: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: colors.primary + "15",
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: colors.primary + '15',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: spacing.lg,
   },
   loadingEmoji: {
@@ -367,42 +371,42 @@ const styles = StyleSheet.create({
   loadingText: {
     ...typography.heading2,
     color: colors.text,
-    textAlign: "center",
+    textAlign: 'center',
     marginBottom: spacing.sm,
   },
   loadingSubtext: {
     ...typography.body,
     color: colors.textSecondary,
-    textAlign: "center",
+    textAlign: 'center',
   },
   errorContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     padding: spacing.lg,
   },
   errorText: {
     ...typography.heading2,
     color: colors.error,
-    textAlign: "center",
+    textAlign: 'center',
     marginBottom: spacing.lg,
   },
   resultCard: {
-    alignItems: "center",
+    alignItems: 'center',
     marginBottom: spacing.lg,
   },
   positiveCard: {
-    backgroundColor: colors.error + "10",
+    backgroundColor: colors.error + '10',
     borderColor: colors.error,
     borderWidth: 1,
   },
   negativeCard: {
-    backgroundColor: colors.success + "10",
+    backgroundColor: colors.success + '10',
     borderColor: colors.success,
     borderWidth: 1,
   },
   resultHeader: {
-    alignItems: "center",
+    alignItems: 'center',
     marginBottom: spacing.lg,
   },
   resultIconContainer: {
@@ -410,20 +414,20 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 40,
     backgroundColor: colors.surface,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: spacing.md,
   },
   resultTitle: {
     ...typography.heading2,
     color: colors.text,
-    textAlign: "center",
+    textAlign: 'center',
   },
   resultText: {
     ...typography.heading3,
-    textAlign: "center",
+    textAlign: 'center',
     marginBottom: spacing.lg,
-    fontWeight: "700",
+    fontWeight: '700',
   },
   positiveText: {
     color: colors.error,
@@ -432,8 +436,8 @@ const styles = StyleSheet.create({
     color: colors.success,
   },
   confidenceContainer: {
-    width: "100%",
-    alignItems: "center",
+    width: '100%',
+    alignItems: 'center',
   },
   confidenceLabel: {
     ...typography.caption,
@@ -446,14 +450,14 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   confidenceBar: {
-    width: "100%",
+    width: '100%',
     height: 8,
     backgroundColor: colors.border,
     borderRadius: 4,
-    overflow: "hidden",
+    overflow: 'hidden',
   },
   confidenceFill: {
-    height: "100%",
+    height: '100%',
     borderRadius: 4,
   },
   positiveBar: {
@@ -476,15 +480,15 @@ const styles = StyleSheet.create({
   summaryLabel: {
     ...typography.body,
     color: colors.text,
-    fontWeight: "600",
+    fontWeight: '600',
     marginBottom: spacing.xs,
   },
   characteristicsList: {
     gap: spacing.xs,
   },
   characteristicItem: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     marginLeft: spacing.sm,
   },
   checkmark: {
@@ -517,10 +521,10 @@ const styles = StyleSheet.create({
     ...typography.heading3,
     color: colors.text,
     marginBottom: spacing.md,
-    textAlign: "center",
+    textAlign: 'center',
   },
   actionButtons: {
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: spacing.sm,
     marginBottom: spacing.md,
   },
@@ -528,14 +532,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   navigationButtons: {
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: spacing.sm,
   },
   navButton: {
     flex: 1,
   },
   warningCard: {
-    backgroundColor: colors.warning + "10",
+    backgroundColor: colors.warning + '10',
     borderColor: colors.warning,
   },
   warningTitle: {
