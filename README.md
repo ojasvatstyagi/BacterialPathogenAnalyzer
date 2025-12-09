@@ -2,13 +2,14 @@
 
 A professional mobile application for identifying Burkholderia pseudomallei bacteria using React Native, Expo, Supabase, and AI-powered analysis. Built for laboratory technicians and medical professionals.
 
-## 🔬 Overview
+## Overview
 
-The Bacterial Pathogen Analyzer is a comprehensive diagnostic tool designed to assist healthcare professionals in identifying Burkholderia pseudomallei, the causative agent of melioidosis. The application provides a guided workflow for bacterial analysis, image capture, and AI-powered identification with confidence scoring.
+The Bacterial Pathogen Analyzer is a diagnostic mobile application designed for laboratory technicians and clinicians to assist in identifying Burkholderia pseudomallei, the pathogen responsible for melioidosis.
+Built using React Native + Expo, with Supabase powering authentication, data storage, and secure workflows.
 
-## ✨ Features
+## Features
 
-### 🧪 Core Functionality
+### Core Functionality
 
 - **Multi-step Analysis Workflow**: Guided 4-step process for bacterial identification
   - Bacterial characteristics selection
@@ -21,7 +22,7 @@ The Bacterial Pathogen Analyzer is a comprehensive diagnostic tool designed to a
 - **Analysis History**: Complete history with filtering and search capabilities
 - **Data Export**: Export analysis data for external review
 
-### 🔐 Authentication & Security
+### Authentication & Security
 
 - **Supabase Authentication**: Email/password registration and login
 - **Row Level Security (RLS)**: Database-level security for user data isolation
@@ -29,7 +30,7 @@ The Bacterial Pathogen Analyzer is a comprehensive diagnostic tool designed to a
 - **User Session Management**: Automatic token refresh and session persistence
 - **Account Management**: Profile editing, password updates, and account deletion
 
-### 📱 User Experience
+### User Experience
 
 - **Professional Design**: Medical-grade interface with lime accent colors
 - **Accessibility**: High contrast ratios and readable typography
@@ -37,7 +38,7 @@ The Bacterial Pathogen Analyzer is a comprehensive diagnostic tool designed to a
 - **Responsive Design**: Optimized for various screen sizes
 - **Offline Capability**: Local data caching for network resilience
 
-### 🎨 Design System
+### Design System
 
 - **Custom Theme**: Professional lime (#B6E92D) and white-smoke (#F2F2F2) color palette
 - **Inter Font Family**: Optimized for medical/scientific readability
@@ -68,7 +69,7 @@ The Bacterial Pathogen Analyzer is a comprehensive diagnostic tool designed to a
 - **Expo CLI** for development workflow
 - **ESLint & Prettier** for code quality
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -85,54 +86,6 @@ The Bacterial Pathogen Analyzer is a comprehensive diagnostic tool designed to a
 git clone https://github.com/ojasvatstyagi/BacterialPathogenAnalyzer.git
 cd BacterialPathogenAnalyzer
 npm install
-```
-
-2. **Environment Setup**
-   Create a `.env` file in the root directory:
-
-```env
-EXPO_PUBLIC_SUPABASE_URL=your_supabase_project_url
-EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-EXPO_PUBLIC_API_URL=http://localhost:3001
-```
-
-3. **Supabase Configuration**
-
-#### Database Setup
-
-The application includes pre-built migrations. Run these in your Supabase SQL editor:
-
-```sql
--- The migrations are located in supabase/migrations/
--- Run them in order:
--- 1. 20250622041524_foggy_lantern.sql (main schema)
--- 2. 20250902120536_graceful_moon.sql (colony age column)
--- 3. 20250915191000_add_delete_user_function.sql (user deletion)
-```
-
-#### Authentication Settings
-
-1. Go to Supabase Dashboard → Authentication → Settings
-2. **Email Confirmations**: Enable if you want email verification
-3. **Site URL**: Set to your app's URL (development: `exp://localhost:8081`)
-4. **SMTP Settings**: Configure for production email delivery
-
-#### Storage Setup
-
-1. Go to Storage in Supabase Dashboard
-2. The `colony-images` bucket is created automatically via migration
-3. Verify RLS policies are in place for user data isolation
-
-4. **Start Development**
-
-```bash
-# Start the development server
-npm run dev
-
-# For specific platforms
-npm run ios     # iOS simulator
-npm run android # Android emulator
-npm run web     # Web browser
 ```
 
 ## 📁 Project Structure
@@ -184,22 +137,93 @@ bacterial-pathogen-analyzer/
 └── README.md
 ```
 
-## 🔧 Configuration
+## Configuration
 
-### Environment Variables
+1. **Environment Setup**
+   Create a `.env` file in the root directory:
 
 ```env
-# Required - Supabase Configuration
-EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-EXPO_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-
-# Optional - Development API
+EXPO_PUBLIC_SUPABASE_URL=your_supabase_project_url
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 EXPO_PUBLIC_API_URL=http://localhost:3001
-
-# Production - Additional configurations
-EXPO_PUBLIC_SENTRY_DSN=your_sentry_dsn
-EXPO_PUBLIC_ANALYTICS_ID=your_analytics_id
 ```
+
+⚠️ Do NOT commit your .env file.
+
+Expo loads these automatically for expo start, but EAS cloud builds do not use `.env`
+→ See next section for production builds.
+
+2. **Production Build: EAS Build Configuration**
+
+Expo now uses EAS Environment Variables instead of storing secrets locally.
+
+1. Create Secrets for cloud builds:
+   Run the following commands and enter values when prompted:
+
+```bash
+eas secret:create EXPO_PUBLIC_SUPABASE_URL your_supabase_project_url
+eas secret:create EXPO_PUBLIC_SUPABASE_ANON_KEY your_supabase_anon_key
+eas secret:create EXPO_PUBLIC_API_URL http://localhost:3001
+```
+
+Why EAS Secrets?
+
+1. `.env` is NOT included in EAS cloud builds for security.
+2. EAS Secrets securely store environment variables for production builds.
+3. Ensures consistent builds across devices and CI
+
+### Build with EAS
+
+```bash
+eas build --platform ios --profile preview
+eas build --platform android --profile preview
+```
+
+Or for production:
+
+```bash
+eas build --platform ios --profile production
+eas build --platform android --profile production
+```
+
+4. **Supabase Configuration**
+
+### Database Setup
+
+The application includes pre-built migrations. Run these in your Supabase SQL editor:
+
+```sql
+-- The migrations are located in supabase/migrations/
+-- Run them in order:
+-- 1. 20250622041524_foggy_lantern.sql (main schema)
+-- 2. 20250902120536_graceful_moon.sql (colony age column)
+-- 3. 20250915191000_add_delete_user_function.sql (user deletion)
+```
+
+## Database Schema
+
+### Tables
+
+#### `analyses`
+
+- `id` (UUID, Primary Key)
+- `user_id` (UUID, Foreign Key → auth.users)
+- `characteristics` (Text Array)
+- `culture_medium` (Text)
+- `colony_age` (Text)
+- `image_url` (Text, Nullable)
+- `result` (Text, Nullable)
+- `confidence` (Decimal, 0.0-1.0)
+- `created_at` (Timestamp)
+
+### Storage Buckets
+
+- `colony-images`: Secure storage for bacterial colony images
+
+### Functions
+
+- `get_user_analysis_stats()`: User statistics aggregation
+- `delete_user()`: Complete user data deletion
 
 ### Supabase Setup Checklist
 
@@ -211,7 +235,32 @@ EXPO_PUBLIC_ANALYTICS_ID=your_analytics_id
 - [ ] Set up Row Level Security policies
 - [ ] Configure site URL and redirect URLs
 
-## 🧪 Analysis Workflow
+#### Authentication Settings
+
+1. Go to Supabase Dashboard → Authentication → Settings
+2. **Email Confirmations**: Enable if you want email verification
+3. **Site URL**: Set to your app's URL (development: `exp://localhost:8081`)
+4. **SMTP Settings**: Configure for production email delivery
+
+#### Storage Setup
+
+1. Go to Storage in Supabase Dashboard
+2. The `colony-images` bucket is created automatically via migration
+3. Verify RLS policies are in place for user data isolation
+
+4. **Start Development**
+
+```bash
+# Start the development server
+npm run dev
+
+# For specific platforms
+npm run ios     # iOS simulator
+npm run android # Android emulator
+npm run web     # Web browser
+```
+
+## Analysis Workflow
 
 ### Step 1: Bacterial Characteristics
 
@@ -270,84 +319,12 @@ EXPO_PUBLIC_ANALYTICS_ID=your_analytics_id
 - GDPR-compliant data handling
 - No third-party tracking (configurable)
 
-## 📊 Database Schema
-
-### Tables
-
-#### `analyses`
-
-- `id` (UUID, Primary Key)
-- `user_id` (UUID, Foreign Key → auth.users)
-- `characteristics` (Text Array)
-- `culture_medium` (Text)
-- `colony_age` (Text)
-- `image_url` (Text, Nullable)
-- `result` (Text, Nullable)
-- `confidence` (Decimal, 0.0-1.0)
-- `created_at` (Timestamp)
-
-### Storage Buckets
-
-- `colony-images`: Secure storage for bacterial colony images
-
-### Functions
-
-- `get_user_analysis_stats()`: User statistics aggregation
-- `delete_user()`: Complete user data deletion
-
-## 🚀 Deployment
-
-### Mobile App Deployment
-
-#### iOS App Store
-
-```bash
-# Build for iOS
-eas build --platform ios --profile production
-
-# Submit to App Store
-eas submit --platform ios
-```
-
-#### Google Play Store
-
-```bash
-# Build for Android
-eas build --platform android --profile production
-
-# Submit to Play Store
-eas submit --platform android
-```
-
 ### Backend Deployment
 
 - **Database**: Supabase (managed PostgreSQL)
 - **Storage**: Supabase Storage (S3-compatible)
 - **Authentication**: Supabase Auth
 - **API**: Mock server for development (replace with production ML service)
-
-### Environment Configuration
-
-#### Development
-
-```json
-{
-  "expo": {
-    "extra": {
-      "eas": {
-        "projectId": "f144ea13-2608-4503-9bee-09221635cb32"
-      }
-    }
-  }
-}
-```
-
-#### Production
-
-- Configure production Supabase project
-- Set up custom SMTP for email delivery
-- Configure analytics and error tracking
-- Set up CI/CD pipeline with EAS
 
 ## 🧪 Testing
 
@@ -367,8 +344,6 @@ eas submit --platform android
 - [ ] Android emulator testing
 - [ ] Physical device testing
 - [ ] Web browser compatibility (limited)
-
-## 🔮 Future Enhancements
 
 ### Machine Learning Integration
 
@@ -421,7 +396,7 @@ async def analyze_colony(file: UploadFile = File(...)):
 - **Error Tracking**: Crash reporting and debugging
 - **A/B Testing**: Feature experimentation
 
-## 📞 Support & Maintenance
+## Support & Maintenance
 
 ### Technical Support
 
@@ -446,7 +421,7 @@ async def analyze_colony(file: UploadFile = File(...)):
 
 This project is licensed under the MIT License. See LICENSE file for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - **Supabase**: Backend infrastructure and authentication
 - **Expo**: React Native development platform
