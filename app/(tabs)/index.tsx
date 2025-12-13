@@ -1,4 +1,3 @@
-// app/(tabs)/index.tsx
 
 import React, { useCallback, useState } from "react";
 import {
@@ -20,8 +19,9 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useAuth } from "@/context/AuthContext";
+import { useTheme } from "@/context/ThemeContext";
 import { supabase } from "@/lib/supabase";
-import { colors, typography, spacing } from "@/constants/theme";
+import { typography, spacing } from "@/constants/theme";
 
 interface AnalysisStats {
   total: number;
@@ -40,18 +40,22 @@ const StatCard = ({
   title: string;
   value: number;
   color: string;
-}) => (
-  <Card style={styles.statCard}>
-    <View style={styles.statHeader}>
-      <Icon size={24} color={color} />
-      <Text style={[styles.statNumber, { color: colors.text }]}>{value}</Text>
-    </View>
-    <Text style={styles.statLabel}>{title}</Text>
-  </Card>
-);
+}) => {
+  const { colors } = useTheme();
+  return (
+    <Card style={styles.statCard}>
+      <View style={styles.statHeader}>
+        <Icon size={24} color={color} />
+        <Text style={[styles.statNumber, { color: colors.text }]}>{value}</Text>
+      </View>
+      <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{title}</Text>
+    </Card>
+  );
+};
 
 export default function HomeScreen() {
   const { user, signOut } = useAuth();
+  const { colors } = useTheme();
   const [stats, setStats] = useState<AnalysisStats>({
     total: 0,
     thisWeek: 0,
@@ -121,11 +125,10 @@ export default function HomeScreen() {
       } else {
         router.replace("/(auth)/login");
       }
-      // Cleanup for useFocusEffect: return a function that is run when the screen loses focus
       return () => {
-        setLoading(true); // Reset loading state when leaving the screen
+        setLoading(true);
       };
-    }, [user, loadStats]) // Depend on loadStats (which is stable via useCallback) and user
+    }, [user, loadStats])
   );
 
   const handleStartAnalysis = () => {
@@ -148,24 +151,24 @@ export default function HomeScreen() {
 
   if (!user || loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Loading dashboard...</Text>
+        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Loading dashboard...</Text>
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
           <View style={styles.userInfo}>
-            <Text style={styles.welcome}>Welcome back,</Text>
-            <Text style={styles.userName}>{getUserDisplayName()}</Text>
-            <Text style={styles.userRole}>{getUserRole()}</Text>
+            <Text style={[styles.welcome, { color: colors.textSecondary }]}>Welcome back,</Text>
+            <Text style={[styles.userName, { color: colors.text }]}>{getUserDisplayName()}</Text>
+            <Text style={[styles.userRole, { color: colors.primary }]}>{getUserRole()}</Text>
           </View>
           <Button
             title="Sign Out"
@@ -177,8 +180,8 @@ export default function HomeScreen() {
 
         {/* Hero Card */}
         <Card style={styles.heroCard}>
-          <Text style={styles.heroTitle}>Bacterial Pathogen Analyzer</Text>
-          <Text style={styles.heroSubtitle}>
+          <Text style={[styles.heroTitle, { color: colors.text }]}>Bacterial Pathogen Analyzer</Text>
+          <Text style={[styles.heroSubtitle, { color: colors.textSecondary }]}>
             Professional diagnostic tool for Burkholderia pseudomallei
             identification
           </Text>
@@ -189,7 +192,7 @@ export default function HomeScreen() {
           />
         </Card>
 
-        {/* Stats Grid - Using the StatCard helper for clean JSX */}
+        {/* Stats Grid */}
         <View style={styles.statsGrid}>
           <StatCard
             icon={BarChart}
@@ -203,7 +206,6 @@ export default function HomeScreen() {
             value={stats.thisWeek}
             color={colors.primary}
           />
-          {/* UI Improvement: Use status colors for Positive/Negative */}
           <StatCard
             icon={TrendingUp}
             title="Positive Results"
@@ -220,8 +222,8 @@ export default function HomeScreen() {
 
         {/* Info Card */}
         <Card style={styles.infoCard}>
-          <Text style={styles.infoTitle}>About Burkholderia pseudomallei</Text>
-          <Text style={styles.infoText}>
+          <Text style={[styles.infoTitle, { color: colors.text }]}>About Burkholderia pseudomallei</Text>
+          <Text style={[styles.infoText, { color: colors.textSecondary }]}>
             This app helps identify Burkholderia pseudomallei, the causative
             agent of melioidosis. Key characteristics include gram-negative
             bacilli with bipolar appearance and oxidase-positive reactions.
@@ -235,23 +237,19 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   loadingContainer: {
-    // New: Style for centralized loading spinner
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: colors.background,
   },
   loadingText: {
     ...typography.body,
-    color: colors.textSecondary,
     marginTop: spacing.md,
   },
   content: {
     padding: spacing.lg,
-    paddingBottom: spacing.xxl, // Ensure enough bottom padding for tab bar clearance
+    paddingBottom: spacing.xxl,
   },
   header: {
     flexDirection: "row",
@@ -264,33 +262,28 @@ const styles = StyleSheet.create({
   },
   welcome: {
     ...typography.body,
-    color: colors.textSecondary,
     marginBottom: spacing.xs,
   },
   userName: {
     ...typography.heading2,
-    color: colors.text,
     marginBottom: spacing.xs,
   },
   userRole: {
     ...typography.caption,
-    color: colors.primary,
     fontWeight: "600",
   },
   heroCard: {
     alignItems: "center",
     marginBottom: spacing.lg,
-    padding: spacing.xl, // Added a slight bottom margin to the hero card
+    padding: spacing.xl,
   },
   heroTitle: {
     ...typography.heading2,
-    color: colors.text,
     textAlign: "center",
     marginBottom: spacing.sm,
   },
   heroSubtitle: {
     ...typography.body,
-    color: colors.textSecondary,
     textAlign: "center",
     marginBottom: spacing.lg,
   },
@@ -300,14 +293,14 @@ const styles = StyleSheet.create({
   statsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "space-between", // UI Improvement: Space cards evenly
+    justifyContent: "space-between",
     gap: spacing.sm,
     marginBottom: spacing.lg,
   },
   statCard: {
-    width: "48.5%", // UI Improvement: Use percentage width for two columns with gap
+    width: "48.5%",
     alignItems: "center",
-    padding: spacing.md, // Reduced padding slightly from 'lg' for tighter cards
+    padding: spacing.md,
   },
   statHeader: {
     alignItems: "center",
@@ -315,12 +308,10 @@ const styles = StyleSheet.create({
   },
   statNumber: {
     ...typography.heading2,
-    color: colors.text,
     marginTop: spacing.xs,
   },
   statLabel: {
     ...typography.caption,
-    color: colors.textSecondary,
     textAlign: "center",
     minHeight: typography.caption.lineHeight * 2,
   },
@@ -329,12 +320,10 @@ const styles = StyleSheet.create({
   },
   infoTitle: {
     ...typography.heading3,
-    color: colors.text,
     marginBottom: spacing.sm,
   },
   infoText: {
     ...typography.body,
-    color: colors.textSecondary,
     lineHeight: 24,
   },
 });
