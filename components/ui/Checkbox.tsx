@@ -3,7 +3,8 @@
 import React from "react";
 import { TouchableOpacity, Text, View, StyleSheet } from "react-native";
 import { Check } from "lucide-react-native";
-import { colors, typography, spacing, borderRadius } from "@/constants/theme";
+import { typography, spacing, borderRadius } from "@/constants/theme";
+import { useTheme } from "@/context/ThemeContext";
 
 interface CheckboxProps {
   label: string;
@@ -18,6 +19,8 @@ export function Checkbox({
   onToggle,
   disabled = false,
 }: CheckboxProps) {
+  const { colors } = useTheme();
+
   return (
     <TouchableOpacity
       style={[styles.container, disabled && styles.disabled]}
@@ -28,14 +31,29 @@ export function Checkbox({
       <View
         style={[
           styles.checkbox,
-          checked && styles.checkboxChecked,
-          disabled && styles.checkboxDisabled,
+          {
+            borderColor: colors.border,
+            backgroundColor: colors.surface,
+          },
+          checked && {
+            backgroundColor: colors.primary,
+            borderColor: colors.primary,
+          },
+          disabled && {
+            backgroundColor: colors.disabled,
+            borderColor: colors.disabled,
+          },
         ]}
       >
-        {/* Fix: Changed check icon color to colors.surface (white) for better contrast on colors.primary (lime) */}
         {checked && <Check color={colors.surface} size={18} strokeWidth={3} />}
       </View>
-      <Text style={[styles.label, disabled && styles.labelDisabled]}>
+      <Text
+        style={[
+          styles.label,
+          { color: colors.text },
+          disabled && { color: colors.disabled },
+        ]}
+      >
         {label}
       </Text>
     </TouchableOpacity>
@@ -52,28 +70,14 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderWidth: 2,
-    borderColor: colors.border,
     borderRadius: borderRadius.sm,
     marginRight: spacing.sm,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.surface,
-  },
-  checkboxChecked: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  checkboxDisabled: {
-    backgroundColor: colors.disabled,
-    borderColor: colors.disabled,
   },
   label: {
     ...typography.body,
-    color: colors.text,
     flex: 1,
-  },
-  labelDisabled: {
-    color: colors.disabled,
   },
   disabled: {
     opacity: 0.6,
