@@ -1,9 +1,9 @@
+
 import React, { useState } from "react";
 import { View, Text, StyleSheet, Alert, Image, Platform } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
-// Use legacy FileSystem API to avoid deprecation warnings
 import * as FileSystem from "expo-file-system/legacy";
 
 import { supabase } from "@/lib/supabase";
@@ -12,13 +12,13 @@ import { Camera, Image as ImageIcon } from "lucide-react-native";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { TopBar } from "@/components/ui/TopBar";
-import { colors, typography, spacing } from "@/constants/theme";
+import { useTheme } from "@/context/ThemeContext";
+import { typography, spacing } from "@/constants/theme";
 
 export default function CaptureScreen() {
+  const { colors } = useTheme();
   const params = useLocalSearchParams();
   const { user } = useAuth();
-
-  // We can use ImagePicker's permission hooks
   const [cameraPermission, requestCameraPermission] = ImagePicker.useCameraPermissions();
 
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
@@ -35,7 +35,6 @@ export default function CaptureScreen() {
 
   const takePicture = async () => {
     try {
-      // Check permissions
       if (!cameraPermission?.granted) {
         const permissionResult = await requestCameraPermission();
         if (!permissionResult.granted) {
@@ -46,8 +45,8 @@ export default function CaptureScreen() {
 
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true, // ✅ Enables cropping
-        aspect: [1, 1], // Square crop for consistency
+        allowsEditing: true,
+        aspect: [1, 1],
         quality: 0.8,
       });
 
@@ -73,7 +72,7 @@ export default function CaptureScreen() {
 
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true, // ✅ Enables cropping
+        allowsEditing: true,
         aspect: [1, 1],
         quality: 0.8,
       });
@@ -100,15 +99,12 @@ export default function CaptureScreen() {
       const fileName = `${user.id}/${Date.now()}.jpg`;
       const contentType = "image/jpeg";
 
-      // 1. Read the file into Base64 format
       const base64Data = await FileSystem.readAsStringAsync(capturedImage, {
         encoding: "base64",
       });
 
-      // 2. Convert Base64 string to a Uint8Array
       const rawData = decode(base64Data);
 
-      // 3. Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from("colony-images")
         .upload(fileName, rawData, {
@@ -120,7 +116,6 @@ export default function CaptureScreen() {
         throw uploadError;
       }
 
-      // 4. Create a Signed URL
       const { data: urlData, error: urlError } = await supabase.storage
         .from("colony-images")
         .createSignedUrl(fileName, 60 * 60);
@@ -129,7 +124,6 @@ export default function CaptureScreen() {
         throw urlError;
       }
 
-      // 5. Navigate to the next step
       router.push({
         pathname: "/analyze/colony-age",
         params: {
@@ -154,7 +148,6 @@ export default function CaptureScreen() {
     }
   };
 
-  // Helper function to decode Base64 string into a Uint8Array
   const decode = (base64: string): Uint8Array => {
     if (typeof atob === "function") {
       return Uint8Array.from(atob(base64), c => c.charCodeAt(0));
@@ -162,14 +155,9 @@ export default function CaptureScreen() {
     return new Uint8Array(0);
   };
 
-  // ------------------------------------------------------------
-  // UI RENDER
-  // ------------------------------------------------------------
-
-  // Review UI
   if (capturedImage) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <TopBar
           title="Review Image"
           subtitle="Step 3 of 4"
@@ -180,8 +168,8 @@ export default function CaptureScreen() {
           <Image source={{ uri: capturedImage }} style={styles.previewImage} />
 
           <Card style={styles.previewActions}>
-            <Text style={styles.previewTitle}>Image Captured</Text>
-            <Text style={styles.previewText}>
+            <Text style={[styles.previewTitle, { color: colors.text }]}>Image Captured</Text>
+            <Text style={[styles.previewText, { color: colors.textSecondary }]}>
               Review your cropped image. Position colonies clearly in the center.
             </Text>
 
@@ -206,9 +194,8 @@ export default function CaptureScreen() {
     );
   }
 
-  // Landing UI (Permission request is handled implicitly by launchCameraAsync but we can show a placeholder)
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar
         title="Capture Image"
         subtitle="Step 3 of 4"
@@ -216,12 +203,12 @@ export default function CaptureScreen() {
       />
 
       <View style={styles.landingContainer}>
-        <View style={styles.iconContainer}>
+        <View style={[styles.iconContainer, { backgroundColor: colors.primary + "10" }]}>
           <Camera size={64} color={colors.primary} />
         </View>
 
-        <Text style={styles.landingTitle}>Take a Photo</Text>
-        <Text style={styles.landingText}>
+        <Text style={[styles.landingTitle, { color: colors.text }]}>Take a Photo</Text>
+        <Text style={[styles.landingText, { color: colors.textSecondary }]}>
           Capture a clear photo of the bacterial colony. You will be able to crop the image after taking it.
         </Text>
 
@@ -234,9 +221,9 @@ export default function CaptureScreen() {
           />
 
           <View style={styles.orDivider}>
-            <View style={styles.line} />
-            <Text style={styles.orText}>OR</Text>
-            <View style={styles.line} />
+            <View style={[styles.line, { backgroundColor: colors.border }]} />
+            <Text style={[styles.orText, { color: colors.textSecondary }]}>OR</Text>
+            <View style={[styles.line, { backgroundColor: colors.border }]} />
           </View>
 
           <Button
@@ -252,10 +239,10 @@ export default function CaptureScreen() {
   );
 }
 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   landingContainer: {
     flex: 1,
@@ -267,20 +254,17 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: colors.primary + "10",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: spacing.xl,
   },
   landingTitle: {
     ...typography.heading2,
-    color: colors.text,
     marginBottom: spacing.sm,
     textAlign: 'center',
   },
   landingText: {
     ...typography.body,
-    color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: spacing.xl,
     maxWidth: 300,
@@ -301,11 +285,9 @@ const styles = StyleSheet.create({
   line: {
     flex: 1,
     height: 1,
-    backgroundColor: colors.border,
   },
   orText: {
     marginHorizontal: spacing.md,
-    color: colors.textSecondary,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -324,13 +306,11 @@ const styles = StyleSheet.create({
   },
   previewTitle: {
     ...typography.heading3,
-    color: colors.text,
     textAlign: "center",
     marginBottom: spacing.sm,
   },
   previewText: {
     ...typography.body,
-    color: colors.textSecondary,
     textAlign: "center",
     marginBottom: spacing.lg,
   },
@@ -343,3 +323,4 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
+

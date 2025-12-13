@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
@@ -7,7 +8,8 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { TopBar } from "@/components/ui/TopBar";
-import { colors, typography, spacing } from "@/constants/theme";
+import { useTheme } from "@/context/ThemeContext";
+import { typography, spacing } from "@/constants/theme";
 
 const CULTURE_MEDIA = [
   "Blood Agar",
@@ -17,15 +19,14 @@ const CULTURE_MEDIA = [
 ];
 
 export default function MediaScreen() {
+  const { colors } = useTheme();
   const params = useLocalSearchParams();
   const [selectedMedium, setSelectedMedium] = useState<string>("");
 
-  // Safely parse characteristics
   const characteristics = params.characteristics
     ? JSON.parse(params.characteristics as string)
     : [];
 
-  // Logic to handle single-selection (toggle on/off)
   const toggleMedium = (medium: string) => {
     setSelectedMedium((prev) => (prev === medium ? "" : medium));
   };
@@ -38,7 +39,7 @@ export default function MediaScreen() {
         pathname: "/analyze/capture",
         params: {
           characteristics: JSON.stringify(characteristics),
-          medium: selectedMedium,
+          cultureMedium: selectedMedium,
         },
       });
     }
@@ -49,7 +50,7 @@ export default function MediaScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <TopBar
         title="Culture Medium"
         subtitle="Step 2 of 4"
@@ -59,19 +60,19 @@ export default function MediaScreen() {
       <ScrollView contentContainerStyle={styles.content} bounces={true}>
         <Card style={styles.instructionCard}>
           <View style={styles.instructionHeader}>
-            <View style={styles.iconContainer}>
+            <View style={[styles.iconContainer, { backgroundColor: colors.primary + "15" }]}>
               <FlaskConical size={32} color={colors.primary} />
             </View>
-            <Text style={styles.instructionTitle}>Select Culture Medium</Text>
+            <Text style={[styles.instructionTitle, { color: colors.text }]}>Select Culture Medium</Text>
           </View>
-          <Text style={styles.instructionText}>
-            Choose the **one** culture medium used for your bacterial sample.
-            This information is critical for AI image analysis.
+          <Text style={[styles.instructionText, { color: colors.textSecondary }]}>
+            Choose the one culture medium used for your bacterial sample. This
+            information is critical for AI image analysis.
           </Text>
         </Card>
 
-        <Card style={styles.summaryCard}>
-          <Text style={styles.summaryTitle}>Selected Characteristics</Text>
+        <Card style={[styles.summaryCard, { backgroundColor: colors.primary + "10", borderColor: colors.primary + "30" }]}>
+          <Text style={[styles.summaryTitle, { color: colors.text }]}>Selected Characteristics</Text>
           <View style={styles.characteristicsList}>
             {characteristics.map((characteristic: string, index: number) => (
               <View key={index} style={styles.characteristicItem}>
@@ -80,16 +81,15 @@ export default function MediaScreen() {
                   color={colors.primary}
                   style={styles.characteristicIcon}
                 />
-                <Text style={styles.characteristicText}>{characteristic}</Text>
+                <Text style={[styles.characteristicText, { color: colors.text }]}>{characteristic}</Text>
               </View>
             ))}
           </View>
         </Card>
 
-        {/* Selection Card */}
         <Card style={styles.mediaCard}>
-          <Text style={styles.sectionTitle}>Available Culture Media</Text>
-          <Text style={styles.sectionSubtitle}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Available Culture Media</Text>
+          <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
             Please select one of the following media:
           </Text>
 
@@ -105,8 +105,8 @@ export default function MediaScreen() {
           </View>
 
           {selectedMedium && (
-            <View style={styles.selectedInfo}>
-              <Text style={styles.selectedText}>
+            <View style={[styles.selectedInfo, { backgroundColor: colors.primary + "10", borderColor: colors.primary + "30" }]}>
+              <Text style={[styles.selectedText, { color: colors.primary }]}>
                 Medium Selected: {selectedMedium}
               </Text>
             </View>
@@ -114,14 +114,23 @@ export default function MediaScreen() {
         </Card>
 
         {!canProceed && (
-          <Card variant="outlined" style={styles.warningCard}>
+          <Card
+            variant="outlined"
+            style={[
+              styles.warningCard,
+              {
+                backgroundColor: colors.error + "10",
+                borderColor: colors.error,
+              }
+            ]}
+          >
             <View style={styles.warningContent}>
               <AlertTriangle
                 size={20}
                 color={colors.error}
                 style={styles.warningIcon}
               />
-              <Text style={styles.warningText}>
+              <Text style={[styles.warningText, { color: colors.error }]}>
                 Please select one culture medium to proceed with image capture
                 and analysis.
               </Text>
@@ -140,10 +149,10 @@ export default function MediaScreen() {
   );
 }
 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   content: {
     padding: spacing.lg,
@@ -161,35 +170,29 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: colors.primary + "15",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: spacing.sm,
   },
   instructionTitle: {
     ...typography.heading2,
-    color: colors.text,
     textAlign: "center",
   },
   instructionText: {
     ...typography.body,
-    color: colors.textSecondary,
     textAlign: "center",
     lineHeight: 24,
   },
   summaryCard: {
     marginBottom: spacing.lg,
-    backgroundColor: colors.primary + "10",
     borderWidth: 1,
-    borderColor: colors.primary + "30",
   },
   summaryTitle: {
     ...typography.heading3,
-    color: colors.text,
     marginBottom: spacing.md,
   },
   characteristicsList: {
-    gap: spacing.sm, // Slightly increased gap
+    gap: spacing.sm,
   },
   characteristicItem: {
     flexDirection: "row",
@@ -201,7 +204,6 @@ const styles = StyleSheet.create({
   },
   characteristicText: {
     ...typography.body,
-    color: colors.text,
     fontWeight: "500",
   },
   mediaCard: {
@@ -209,13 +211,11 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...typography.heading3,
-    color: colors.text,
-    marginBottom: spacing.xs, // Reduced margin
+    marginBottom: spacing.xs,
     marginTop: spacing.xs,
   },
   sectionSubtitle: {
     ...typography.caption,
-    color: colors.textSecondary,
     marginBottom: spacing.md,
     fontWeight: "600",
   },
@@ -226,21 +226,16 @@ const styles = StyleSheet.create({
   selectedInfo: {
     marginTop: spacing.md,
     padding: spacing.md,
-    backgroundColor: colors.primary + "10", // Changed to primary success
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: colors.primary + "30",
   },
   selectedText: {
     ...typography.body,
-    color: colors.primary, // Changed to primary color
     fontWeight: "600",
     textAlign: "center",
   },
   warningCard: {
     marginBottom: spacing.lg,
-    backgroundColor: colors.error + "10",
-    borderColor: colors.error,
   },
   warningContent: {
     flexDirection: "row",
@@ -252,7 +247,6 @@ const styles = StyleSheet.create({
   },
   warningText: {
     ...typography.body,
-    color: colors.error,
     flex: 1,
     lineHeight: 22,
   },
@@ -260,3 +254,4 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
 });
+
