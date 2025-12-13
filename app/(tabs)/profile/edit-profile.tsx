@@ -1,16 +1,20 @@
+
 import React, { useState } from "react";
 import { View, Text, StyleSheet, Alert, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
-import { colors, typography, spacing } from "@/constants/theme";
+import { useTheme } from "@/context/ThemeContext";
+import { spacing, typography } from "@/constants/theme";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 
 export default function EditProfileScreen() {
   const { user } = useAuth();
+  const { colors } = useTheme();
+
   const [fullName, setFullName] = useState(
     user?.user_metadata?.full_name || ""
   );
@@ -55,10 +59,10 @@ export default function EditProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Card style={styles.card}>
-          <Text style={styles.title}>Edit Profile</Text>
+        <Card style={[styles.card, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.title, { color: colors.text }]}>Edit Profile</Text>
           <Input
             label="Full Name"
             value={fullName}
@@ -103,7 +107,6 @@ export default function EditProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   content: {
     padding: spacing.lg,
@@ -115,7 +118,6 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.heading2,
-    color: colors.text,
     textAlign: "center",
     marginBottom: spacing.lg,
   },
