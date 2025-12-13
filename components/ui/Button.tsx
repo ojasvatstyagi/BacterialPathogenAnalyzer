@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   ViewStyle,
   TextStyle,
+  View,
 } from "react-native";
 import { colors, typography, borderRadius, shadows } from "@/constants/theme";
 
@@ -20,6 +21,7 @@ interface ButtonProps {
   loading?: boolean;
   style?: ViewStyle;
   textStyle?: TextStyle;
+  icon?: React.ReactNode;
 }
 
 export function Button({
@@ -31,6 +33,7 @@ export function Button({
   loading = false,
   style,
   textStyle,
+  icon,
 }: ButtonProps) {
   const buttonStyle = [
     styles.base,
@@ -62,7 +65,10 @@ export function Button({
       {loading ? (
         <ActivityIndicator color={indicatorColor} size="small" />
       ) : (
-        <Text style={textStyles}>{title}</Text>
+        <>
+          {icon && <View style={{ marginRight: 8 }}>{icon}</View>}
+          <Text style={textStyles}>{title}</Text>
+        </>
       )}
     </TouchableOpacity>
   );
@@ -73,6 +79,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     alignItems: "center",
     justifyContent: "center",
+    flexDirection: "row",
     ...shadows.sm,
   },
   primary: {
