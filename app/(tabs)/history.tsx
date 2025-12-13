@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -7,14 +8,16 @@ import {
   Image,
   TouchableOpacity,
   RefreshControl,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Calendar, ListFilter as Filter, Search } from "lucide-react-native";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/context/AuthContext";
+import { useTheme } from "@/context/ThemeContext";
 import { supabase } from "@/lib/supabase";
-import { colors, typography, spacing } from "@/constants/theme";
+import { typography, spacing } from "@/constants/theme";
 
 interface Analysis {
   id: string;
@@ -29,6 +32,7 @@ interface Analysis {
 
 export default function HistoryScreen() {
   const { user } = useAuth();
+  const { colors } = useTheme();
   const [analyses, setAnalyses] = useState<Analysis[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -103,24 +107,25 @@ export default function HistoryScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading analysis history...</Text>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Loading analysis history...</Text>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Analysis History</Text>
-        <Text style={styles.headerSubtitle}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Analysis History</Text>
+        <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
           {getFilteredCount()} {filter === "all" ? "total" : filter} analyses
         </Text>
       </View>
 
-      <View style={styles.filterContainer}>
+      <View style={[styles.filterContainer, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View style={styles.filterButtons}>
             <Button
@@ -151,7 +156,11 @@ export default function HistoryScreen() {
       <ScrollView
         contentContainerStyle={styles.content}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+          />
         }
       >
         {analyses.length === 0 ? (
@@ -161,8 +170,8 @@ export default function HistoryScreen() {
               color={colors.disabled}
               style={styles.emptyIcon}
             />
-            <Text style={styles.emptyTitle}>No Analyses Found</Text>
-            <Text style={styles.emptyText}>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>No Analyses Found</Text>
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
               {filter === "all"
                 ? "Start your first bacterial analysis to see results here."
                 : `No ${filter} results found. Try changing your filter.`}
@@ -174,34 +183,34 @@ export default function HistoryScreen() {
               <Card style={styles.analysisCard}>
                 <View style={styles.analysisHeader}>
                   <View style={styles.analysisInfo}>
-                    <Text style={styles.analysisDate}>
+                    <Text style={[styles.analysisDate, { color: colors.text }]}>
                       {formatDate(analysis.created_at)}
                     </Text>
-                    <Text style={styles.analysisMedium}>
+                    <Text style={[styles.analysisMedium, { color: colors.textSecondary }]}>
                       {analysis.culture_medium}
                     </Text>
-                    <Text style={styles.analysisMedium}>
+                    <Text style={[styles.analysisMedium, { color: colors.textSecondary }]}>
                       Colony Age: {analysis.colony_age}
                     </Text>
                   </View>
                   {analysis.image_url && (
                     <Image
                       source={{ uri: analysis.image_url }}
-                      style={styles.analysisImage}
+                      style={[styles.analysisImage, { borderColor: colors.border }]}
                     />
                   )}
                 </View>
 
                 <View style={styles.characteristicsList}>
                   {analysis.characteristics.map((characteristic, index) => (
-                    <Text key={index} style={styles.characteristicItem}>
+                    <Text key={index} style={[styles.characteristicItem, { color: colors.textSecondary }]}>
                       • {characteristic}
                     </Text>
                   ))}
                 </View>
 
                 {analysis.result && (
-                  <View style={styles.resultContainer}>
+                  <View style={[styles.resultContainer, { borderTopColor: colors.border }]}>
                     <Text
                       style={[
                         styles.resultText,
@@ -211,7 +220,7 @@ export default function HistoryScreen() {
                       {analysis.result}
                     </Text>
                     {analysis.confidence && (
-                      <Text style={styles.confidenceText}>
+                      <Text style={[styles.confidenceText, { color: colors.textSecondary }]}>
                         {Math.round(analysis.confidence * 100)}% confidence
                       </Text>
                     )}
@@ -229,29 +238,22 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   header: {
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
-    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   headerTitle: {
     ...typography.heading2,
-    color: colors.text,
   },
   headerSubtitle: {
     ...typography.caption,
-    color: colors.textSecondary,
     marginTop: spacing.xs,
   },
   filterContainer: {
     paddingVertical: spacing.sm,
-    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   filterButtons: {
     flexDirection: "row",
@@ -271,7 +273,6 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     ...typography.body,
-    color: colors.textSecondary,
   },
   emptyCard: {
     alignItems: "center",
@@ -282,12 +283,10 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     ...typography.heading3,
-    color: colors.text,
     marginBottom: spacing.sm,
   },
   emptyText: {
     ...typography.body,
-    color: colors.textSecondary,
     textAlign: "center",
     lineHeight: 24,
   },
@@ -305,12 +304,10 @@ const styles = StyleSheet.create({
   },
   analysisDate: {
     ...typography.body,
-    color: colors.text,
     fontWeight: "600",
   },
   analysisMedium: {
     ...typography.caption,
-    color: colors.textSecondary,
     marginTop: spacing.xs,
   },
   analysisImage: {
@@ -319,14 +316,12 @@ const styles = StyleSheet.create({
     borderRadius: spacing.sm,
     marginLeft: spacing.md,
     borderWidth: 1,
-    borderColor: colors.border,
   },
   characteristicsList: {
     marginBottom: spacing.sm,
   },
   characteristicItem: {
     ...typography.caption,
-    color: colors.textSecondary,
     marginBottom: 2,
   },
   resultContainer: {
@@ -335,7 +330,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingTop: spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
   },
   resultText: {
     ...typography.body,
@@ -344,6 +338,5 @@ const styles = StyleSheet.create({
   },
   confidenceText: {
     ...typography.caption,
-    color: colors.textSecondary,
   },
 });
