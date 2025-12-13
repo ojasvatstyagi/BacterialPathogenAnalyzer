@@ -1,28 +1,32 @@
 import React from "react";
-import { View, StyleSheet, ViewStyle } from "react-native";
-import { colors, spacing, borderRadius, shadows } from "@/constants/theme";
+import { View, StyleSheet, StyleProp, ViewStyle } from "react-native";
+import { colors, spacing, borderRadius } from "@/constants/theme";
+import { useTheme } from "@/context/ThemeContext";
 
 interface CardProps {
   children: React.ReactNode;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   variant?: "default" | "outlined";
 }
 
 export function Card({ children, style, variant = "default" }: CardProps) {
-  return <View style={[styles.card, styles[variant], style]}>{children}</View>;
+  const { colors, shadows } = useTheme();
+
+  const cardStyle: StyleProp<ViewStyle> = [
+    {
+      backgroundColor: colors.surface,
+      borderRadius: borderRadius.lg,
+      padding: spacing.lg,
+    },
+    variant === "default" && shadows.md,
+    variant === "outlined" && {
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    style,
+  ];
+
+  return <View style={cardStyle}>{children}</View>;
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    padding: spacing.lg,
-  },
-  default: {
-    ...shadows.md,
-  },
-  outlined: {
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-});
+const styles = StyleSheet.create({});
