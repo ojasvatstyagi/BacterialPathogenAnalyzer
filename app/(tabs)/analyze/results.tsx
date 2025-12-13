@@ -1,555 +1,671 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, Alert } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+
+/**
+ * Results Screen - Integrated with Real ML Model
+ * Shows prediction results from the ML API
+ */
+
+import React, { useEffect, useState } from "react";
 import {
-  CircleCheck as CheckCircle,
-  Circle as XCircle,
-  Share,
-  Save,
-  SendHorizontal as SendHorizonal,
-} from 'lucide-react-native';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { TopBar } from '@/components/ui/TopBar';
-import { useAuth } from '@/context/AuthContext';
-import { supabase } from '@/lib/supabase';
-import { colors, typography, spacing } from '@/constants/theme';
-
-interface AnalysisResult {
-  result: string;
-  confidence: number;
-}
-
-const COLONY_AGES = [
-  { value: '24h', label: '24 hours' },
-  { value: '48h', label: '48 hours' },
-  { value: '72h', label: '72 hours' },
-  { value: '96h', label: '96 hours' },
-];
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Image,
+  ActivityIndicator,
+  Alert,
+  Pressable,
+} from "react-native";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/context/AuthContext";
+import {
+  predictBacterium,
+  checkMLApiHealth,
+  PredictionResponse,
+} from "@/lib/mlService";
+import { Feather } from "@expo/vector-icons";
+import { useTheme } from "@/context/ThemeContext";
+import { colors, spacing } from "@/constants/theme";
 
 export default function ResultsScreen() {
-  const params = useLocalSearchParams();
+  const { colors } = useTheme();
+  const router = useRouter();
   const { user } = useAuth();
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(
-    null
-  );
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [sending, setSending] = useState(false);
+  const params = useLocalSearchParams();
 
-  const characteristics = params.characteristics
-    ? JSON.parse(params.characteristics as string)
-    : [];
-  const medium = params.medium as string;
+  // Parse parameters from previous screens
+  const characteristics = JSON.parse(
+    (params.characteristics as string) || "[]"
+  ) as string[];
   const imageUri = params.imageUri as string;
   const colonyAge = params.colonyAge as string;
 
+  // Try multiple ways to get the agar/cultureMedium
+  let cultureMedium =
+    (params.cultureMedium as string) ||
+    (params.medium as string) ||
+    "Ashdown Agar";
+
+  // State
+  const [loading, setLoading] = useState(true);
+  const [apiHealthy, setApiHealthy] = useState(false);
+  const [prediction, setPrediction] = useState<PredictionResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  // Check API health and run prediction on mount
   useEffect(() => {
-    analyzeImage();
+    performAnalysis();
   }, []);
 
-  const analyzeImage = async () => {
-    setLoading(true);
+  const performAnalysis = async () => {
     try {
-      // Mock API call - in production, this would call your backend
-      const mockResults = [
-        { result: 'Probably Burkholderia pseudomallei', confidence: 0.9 },
-        { result: 'Not Burkholderia pseudomallei', confidence: 0.85 },
-      ];
+      setLoading(true);
+      setError(null);
 
-      // Randomly select a result for demonstration
-      const selectedResult =
-        mockResults[Math.floor(Math.random() * mockResults.length)];
+      // Check if ML API is available
+      console.log("Checking ML API health...");
 
-      // Add some randomness to confidence
-      const confidence =
-        selectedResult.confidence + (Math.random() * 0.1 - 0.05);
+      const healthStatus = await checkMLApiHealth();
+      setApiHealthy(healthStatus.healthy);
 
-      setAnalysisResult({
-        ...selectedResult,
-        confidence: Math.min(0.95, Math.max(0.8, confidence)),
-      });
-    } catch (error) {
-      Alert.alert('Error', 'Failed to analyze image. Please try again.');
+      if (!healthStatus.healthy) {
+        console.warn("[Health Check Failed]", healthStatus.message);
+        throw new Error(
+          healthStatus.message ||
+          "ML API is not available. Please ensure the backend server is running."
+        );
+      }
+
+      // Prepare request
+      const request = {
+        imageUri,
+        agar: cultureMedium,
+        colonyAge,
+        characteristics,
+      };
+
+      console.log("Sending prediction request...");
+      const result = await predictBacterium(request);
+
+      setPrediction(result);
+      console.log("Prediction received:", result);
+    } catch (err) {
+      console.error("Analysis failed:", err);
+      setError(err instanceof Error ? err.message : "Analysis failed");
+
+      Alert.alert(
+        "Analysis Failed",
+        err instanceof Error
+          ? err.message
+          : "An error occurred during analysis",
+        [
+          { text: "Retry", onPress: performAnalysis },
+          { text: "Go Back", onPress: () => router.back() },
+        ]
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  const saveReport = async () => {
-    if (!analysisResult || !user) return;
+  const saveToHistory = async () => {
+    if (!prediction || !user) return;
 
-    setSaving(true);
     try {
-      const { error } = await supabase.from('analyses').insert({
+      setSaving(true);
+
+      // Save analysis to database
+      const { error: insertError } = await supabase.from("analyses").insert({
         user_id: user.id,
         characteristics,
-        culture_medium: medium,
-        image_url: imageUri,
-        result: analysisResult.result,
-        confidence: analysisResult.confidence,
+        culture_medium: cultureMedium,
         colony_age: colonyAge,
+        image_url: imageUri,
+        result: prediction.result,
+        confidence: prediction.confidence / 100, // Store as decimal
       });
 
-      if (error) throw error;
+      if (insertError) {
+        console.error("Insert error:", insertError);
+        throw insertError;
+      }
 
+      Alert.alert("Success", "Analysis saved to history", [
+        {
+          text: "View History",
+          onPress: () => router.push("/(tabs)/history"),
+        },
+        {
+          text: "New Analysis",
+          onPress: () => router.push("/(tabs)/analyze"),
+        },
+      ]);
+    } catch (err) {
+      console.error("Error saving analysis:", err);
       Alert.alert(
-        'Report Saved',
-        'Your analysis report has been saved successfully.',
-        [
-          {
-            text: 'Stay Here',
-            style: 'cancel',
-            onPress: () => {
-              // Just close the dialog, stay on results screen
-            },
-          },
-          {
-            text: 'View History',
-            onPress: () => router.replace('/(tabs)/history'),
-          },
-        ]
+        "Error",
+        err instanceof Error ? err.message : "Failed to save analysis"
       );
-    } catch (error) {
-      console.error('Save error:', error);
-      Alert.alert('Error', 'Failed to save report. Please try again.');
     } finally {
       setSaving(false);
     }
   };
 
-  const sendToLab = async () => {
-    if (!analysisResult) return;
-
-    setSending(true);
-    try {
-      // Mock API call to send report to lab
-      const reportData = {
-        characteristics,
-        medium,
-        colonyAge,
-        result: analysisResult.result,
-        confidence: analysisResult.confidence,
-        timestamp: new Date().toISOString(),
-        userId: user?.id,
-      };
-
-      // In production, this would call your /api/send-report endpoint
-      console.log('Sending report to lab:', reportData);
-
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      Alert.alert(
-        'Report Sent',
-        'Your analysis report has been sent to the laboratory for review.',
-        [{ text: 'OK' }]
-      );
-    } catch (error) {
-      Alert.alert('Error', 'Failed to send report to lab. Please try again.');
-    } finally {
-      setSending(false);
-    }
-  };
-
-  const handleNewAnalysis = () => {
-    // Clear the entire analysis stack and go to analyze home
-    router.dismissAll();
-    router.replace('/(tabs)/analyze');
-  };
-
-  const handleHome = () => {
-    // Clear the entire analysis stack and go to home
-    router.dismissAll();
-    router.replace('/(tabs)');
-  };
-
-  const handleBack = () => {
-    router.back();
+  const sendToLab = () => {
+    Alert.alert(
+      "Send to Laboratory",
+      "This feature will be available soon. It will allow you to send the analysis to a laboratory for confirmation.",
+      [{ text: "OK" }]
+    );
   };
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <TopBar title="Analyzing..." onBack={handleBack} />
-        <View style={styles.loadingContainer}>
-          <View style={styles.loadingContent}>
-            <View style={styles.loadingIcon}>
-              <Text style={styles.loadingEmoji}>🔬</Text>
-            </View>
-            <Text style={styles.loadingText}>Analyzing image...</Text>
-            <Text style={styles.loadingSubtext}>
-              Processing bacterial characteristics and colony morphology
-            </Text>
-          </View>
-        </View>
-      </SafeAreaView>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Analyzing bacterial sample...</Text>
+        <Text style={[styles.loadingSubtext, { color: colors.textSecondary }]}>
+          Using AI-powered detection model
+        </Text>
+      </View>
     );
   }
 
-  if (!analysisResult) {
+  if (error || !prediction) {
     return (
-      <SafeAreaView style={styles.container}>
-        <TopBar title="Analysis Failed" onBack={handleBack} />
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Failed to analyze image</Text>
-          <Button title="Try Again" onPress={analyzeImage} />
-        </View>
-      </SafeAreaView>
+      <View style={[styles.errorContainer, { backgroundColor: colors.background }]}>
+        <Feather name="alert-circle" size={64} color={colors.error} />
+        <Text style={[styles.errorText, { color: colors.error }]}>Analysis Failed</Text>
+        <Text style={[styles.errorSubtext, { color: colors.textSecondary }]}>{error || "Unknown error"}</Text>
+        <Pressable style={[styles.retryButton, { backgroundColor: colors.primary }]} onPress={performAnalysis}>
+          <Text style={styles.retryButtonText}>Retry Analysis</Text>
+        </Pressable>
+        <Pressable style={styles.backButton} onPress={() => router.back()}>
+          <Text style={[styles.backButtonText, { color: colors.primary }]}>Go Back</Text>
+        </Pressable>
+      </View>
     );
   }
 
-  const isPositive = analysisResult.result.includes('Probably');
-  const confidencePercentage = Math.round(analysisResult.confidence * 100);
-  const colonyAgeLabel =
-    COLONY_AGES.find((age) => age.value === colonyAge)?.label || colonyAge;
+  const isBpseudomallei = prediction.is_bpseudo;
+  const confidenceColor =
+    prediction.confidence >= 90
+      ? colors.success
+      : prediction.confidence >= 70
+        ? colors.warning
+        : colors.error;
+
+  const confidenceLevel =
+    prediction.confidence >= 90
+      ? "Very High"
+      : prediction.confidence >= 70
+        ? "Moderate"
+        : prediction.confidence >= 50
+          ? "Low"
+          : "Very Low";
 
   return (
-    <SafeAreaView style={styles.container}>
-      <TopBar title="Analysis Results" onBack={handleBack} />
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
+      {/* Result Header Card */}
+      <View
+        style={[
+          styles.resultHeaderCard,
+          {
+            backgroundColor: isBpseudomallei ? colors.error + "20" : colors.success + "20",
+            borderColor: isBpseudomallei ? colors.error : colors.success,
+          },
+        ]}
+      >
+        <View style={styles.resultIconContainer}>
+          <Feather
+            name={isBpseudomallei ? "alert-triangle" : "check-circle"}
+            size={56}
+            color={isBpseudomallei ? colors.error : colors.success}
+            strokeWidth={1.5}
+          />
+        </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
-        <Card
-          style={{
-            ...styles.resultCard,
-            ...(isPositive ? styles.positiveCard : styles.negativeCard),
-          }}
-        >
-          <View style={styles.resultHeader}>
-            <View style={styles.resultIconContainer}>
-              {isPositive ? (
-                <CheckCircle size={48} color={colors.error} />
-              ) : (
-                <XCircle size={48} color={colors.success} />
-              )}
-            </View>
-            <Text style={styles.resultTitle}>Analysis Complete</Text>
-          </View>
+        <Text style={[styles.resultTitle, { color: colors.text }]}>{prediction.result}</Text>
 
-          <Text
-            style={[
-              styles.resultText,
-              isPositive ? styles.positiveText : styles.negativeText,
-            ]}
-          >
-            {analysisResult.result}
+        <View style={styles.confidenceSection}>
+          <Text style={[styles.confidenceLabel, { color: colors.textSecondary }]}>Confidence Score</Text>
+          <Text style={[styles.confidenceValue, { color: confidenceColor }]}>
+            {prediction.confidence.toFixed(1)}%
           </Text>
+          <Text style={[styles.confidenceLevelText, { color: colors.textSecondary }]}>{confidenceLevel}</Text>
+        </View>
+      </View>
 
-          <View style={styles.confidenceContainer}>
-            <Text style={styles.confidenceLabel}>Confidence Level</Text>
-            <Text style={styles.confidenceValue}>{confidencePercentage}%</Text>
-            <View style={styles.confidenceBar}>
-              <View
-                style={[
-                  styles.confidenceFill,
-                  { width: `${confidencePercentage}%` },
-                  isPositive ? styles.positiveBar : styles.negativeBar,
-                ]}
-              />
-            </View>
+      {/* Captured Image */}
+      {imageUri && (
+        <View style={styles.imageSection}>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Captured Sample</Text>
+          <Image source={{ uri: imageUri }} style={[styles.image, { backgroundColor: colors.surface }]} />
+        </View>
+      )}
+
+      {/* Analysis Details Card */}
+      <View style={[styles.detailsCard, { backgroundColor: colors.surface }]}>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Analysis Details</Text>
+
+        <View style={styles.detailRow}>
+          <View style={[styles.detailIcon, { backgroundColor: colors.primary + "15" }]}>
+            <Feather name="droplet" size={18} color={colors.primary} />
           </View>
-        </Card>
-
-        <Card style={styles.summaryCard}>
-          <Text style={styles.summaryTitle}>Analysis Summary</Text>
-
-          <View style={styles.summarySection}>
-            <Text style={styles.summaryLabel}>Bacterial Characteristics:</Text>
-            <View style={styles.characteristicsList}>
-              {characteristics.map((characteristic: string, index: number) => (
-                <View key={index} style={styles.characteristicItem}>
-                  <View style={styles.checkmark} />
-                  <Text style={styles.characteristicText}>
-                    {characteristic}
-                  </Text>
-                </View>
-              ))}
-            </View>
+          <View style={styles.detailContent}>
+            <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Culture Medium</Text>
+            <Text style={[styles.detailValue, { color: colors.textSecondary }]}>{prediction.metadata.agar}</Text>
           </View>
+        </View>
 
-          <View style={styles.summarySection}>
-            <Text style={styles.summaryLabel}>Culture Medium:</Text>
-            <Text style={styles.summaryValue}>{medium}</Text>
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+        <View style={styles.detailRow}>
+          <View style={[styles.detailIcon, { backgroundColor: colors.primary + "15" }]}>
+            <Feather name="clock" size={18} color={colors.primary} />
           </View>
-
-          <View style={styles.summarySection}>
-            <Text style={styles.summaryLabel}>Colony Age:</Text>
-            <Text style={styles.summaryValue}>{colonyAgeLabel}</Text>
-          </View>
-
-          <View style={styles.summarySection}>
-            <Text style={styles.summaryLabel}>Sample Image:</Text>
-            <Image source={{ uri: imageUri }} style={styles.thumbnailImage} />
-          </View>
-        </Card>
-
-        <Card style={styles.actionsCard}>
-          <Text style={styles.actionsTitle}>Next Steps</Text>
-          <Text style={typography.body}>
-            Please save this report to your history by clicking "Save Report"
-            and send it to the laboratory for further review.
-          </Text>
-
-          <View style={styles.actionButtons}>
-            <Button
-              title="Save Report"
-              onPress={saveReport}
-              loading={saving}
-              style={styles.actionButton}
-            />
-
-            <Button
-              title="Send to Lab"
-              onPress={sendToLab}
-              loading={sending}
-              variant="secondary"
-              style={styles.actionButton}
-            />
-          </View>
-
-          <View style={styles.navigationButtons}>
-            <Button
-              title="New Analysis"
-              onPress={handleNewAnalysis}
-              variant="secondary"
-              style={styles.navButton}
-            />
-
-            <Button
-              title="Home"
-              onPress={handleHome}
-              style={styles.navButton}
-            />
-          </View>
-        </Card>
-
-        {isPositive && (
-          <Card variant="outlined" style={styles.warningCard}>
-            <Text style={styles.warningTitle}>Important Notice</Text>
-            <Text style={styles.warningText}>
-              A positive result indicates potential presence of Burkholderia
-              pseudomallei. Please consult with laboratory personnel for
-              confirmation and appropriate clinical action.
+          <View style={styles.detailContent}>
+            <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Colony Age</Text>
+            <Text style={[styles.detailValue, { color: colors.textSecondary }]}>
+              {prediction.metadata.colony_age}
             </Text>
-          </Card>
+          </View>
+        </View>
+
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+        <View style={styles.detailRow}>
+          <View style={[styles.detailIcon, { backgroundColor: colors.primary + "15" }]}>
+            <Feather name="zap" size={18} color={colors.primary} />
+          </View>
+          <View style={styles.detailContent}>
+            <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Time Elapsed</Text>
+            <Text style={[styles.detailValue, { color: colors.textSecondary }]}>
+              {prediction.metadata.time_hours} hours
+            </Text>
+          </View>
+        </View>
+
+        {prediction.metadata.characteristics.length > 0 && (
+          <>
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
+            <View style={styles.detailRow}>
+              <View style={[styles.detailIcon, { backgroundColor: colors.primary + "15" }]}>
+                <Feather name="list" size={18} color={colors.primary} />
+              </View>
+              <View style={styles.detailContent}>
+                <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Characteristics</Text>
+                <View style={styles.characteristicsList}>
+                  {prediction.metadata.characteristics.map((char, index) => (
+                    <View key={index} style={[styles.characteristicBadge, { backgroundColor: colors.primary + "15" }]}>
+                      <Text style={[styles.characteristicText, { color: colors.primary }]}>{char}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            </View>
+          </>
         )}
-      </ScrollView>
-    </SafeAreaView>
+      </View>
+
+      {/* Interpretation Card */}
+      <View style={[styles.interpretationCard, { backgroundColor: colors.surface, borderLeftColor: colors.primary }]}>
+        <View style={styles.interpretationHeader}>
+          <Feather name="info" size={20} color={colors.primary} />
+          <Text style={[styles.interpretationTitle, { color: colors.textSecondary }]}>Interpretation</Text>
+        </View>
+        <Text style={[styles.interpretationText, { color: colors.textSecondary }]}>
+          {prediction.interpretation}
+        </Text>
+      </View>
+
+      {/* Recommendations Card */}
+      <View style={[styles.recommendationsCard, { backgroundColor: colors.surface }]}>
+        <View style={styles.recommendationsHeader}>
+          <Feather name="check-square" size={20} color={colors.primary} />
+          <Text style={[styles.recommendationsTitle, { color: colors.textSecondary }]}>Recommendations</Text>
+        </View>
+        <View style={styles.recommendationsList}>
+          {prediction.recommendations.map((rec, index) => (
+            <View key={index} style={styles.recommendationItem}>
+              <View style={[styles.recommendationDot, { backgroundColor: colors.primary }]} />
+              <Text style={[styles.recommendationText, { color: colors.textSecondary }]}>{rec}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+
+      {/* Action Buttons */}
+      <View style={styles.actionButtonsSection}>
+        <Pressable
+          style={[styles.actionButton, styles.primaryActionButton, { backgroundColor: colors.primary }]}
+          onPress={saveToHistory}
+          disabled={saving}
+        >
+          {saving ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <>
+              <Feather name="save" size={20} color="#fff" />
+              <Text style={styles.actionButtonText}>Save to History</Text>
+            </>
+          )}
+        </Pressable>
+
+        <Pressable
+          style={[styles.actionButton, styles.secondaryActionButton, { backgroundColor: colors.surface, borderColor: colors.primary }]}
+          onPress={sendToLab}
+        >
+          <Feather name="send" size={20} color={colors.primary} />
+          <Text style={[styles.secondaryActionButtonText, { color: colors.primary }]}>Send to Lab</Text>
+        </Pressable>
+
+        <Pressable
+          style={[
+            styles.actionButton,
+            styles.outlineActionButton,
+            { backgroundColor: colors.surface, borderColor: colors.border }
+          ]}
+          onPress={() => router.push("/(tabs)/analyze")}
+        >
+          <Feather name="plus" size={20} color={colors.primary} />
+          <Text style={[styles.secondaryActionButtonText, { color: colors.primary }]}>New Analysis</Text>
+        </Pressable>
+      </View>
+
+      {/* API Status */}
+      <View style={styles.apiStatusSection}>
+        <View
+          style={[
+            styles.statusIndicator,
+            { backgroundColor: apiHealthy ? colors.success : colors.error },
+          ]}
+        />
+        <Text style={[styles.apiStatusText, { color: colors.textSecondary }]}>
+          {apiHealthy ? "ML API Connected" : "ML API Disconnected"}
+        </Text>
+      </View>
+
+      <View style={{ height: 20 }} />
+    </ScrollView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    padding: spacing.lg,
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.lg,
-  },
-  loadingContent: {
-    alignItems: 'center',
-  },
-  loadingIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.primary + '15',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.lg,
-  },
-  loadingEmoji: {
-    fontSize: 32,
+    justifyContent: "center",
+    alignItems: "center",
   },
   loadingText: {
-    ...typography.heading2,
-    color: colors.text,
-    textAlign: 'center',
-    marginBottom: spacing.sm,
+    marginTop: 16,
+    fontSize: 18,
+    fontWeight: "600",
   },
   loadingSubtext: {
-    ...typography.body,
-    color: colors.textSecondary,
-    textAlign: 'center',
+    marginTop: 8,
+    fontSize: 14,
   },
   errorContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.lg,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
   },
   errorText: {
-    ...typography.heading2,
-    color: colors.error,
-    textAlign: 'center',
-    marginBottom: spacing.lg,
+    marginTop: 16,
+    fontSize: 24,
+    fontWeight: "bold",
   },
-  resultCard: {
-    alignItems: 'center',
-    marginBottom: spacing.lg,
+  errorSubtext: {
+    marginTop: 8,
+    fontSize: 14,
+    textAlign: "center",
   },
-  positiveCard: {
-    backgroundColor: colors.error + '10',
-    borderColor: colors.error,
-    borderWidth: 1,
+  retryButton: {
+    marginTop: 24,
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 8,
   },
-  negativeCard: {
-    backgroundColor: colors.success + '10',
-    borderColor: colors.success,
-    borderWidth: 1,
+  retryButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
   },
-  resultHeader: {
-    alignItems: 'center',
-    marginBottom: spacing.lg,
+  backButton: {
+    marginTop: 12,
+    paddingVertical: 12,
+  },
+  backButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  resultHeaderCard: {
+    margin: 16,
+    marginBottom: 12,
+    padding: 24,
+    borderRadius: 16,
+    alignItems: "center",
+    borderWidth: 2,
   },
   resultIconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.md,
+    marginBottom: 12,
   },
   resultTitle: {
-    ...typography.heading2,
-    color: colors.text,
-    textAlign: 'center',
+    fontSize: 22,
+    fontWeight: "700",
+    textAlign: "center",
+    marginBottom: 16,
   },
-  resultText: {
-    ...typography.heading3,
-    textAlign: 'center',
-    marginBottom: spacing.lg,
-    fontWeight: '700',
-  },
-  positiveText: {
-    color: colors.error,
-  },
-  negativeText: {
-    color: colors.success,
-  },
-  confidenceContainer: {
-    width: '100%',
-    alignItems: 'center',
+  confidenceSection: {
+    alignItems: "center",
+    width: "100%",
   },
   confidenceLabel: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    marginBottom: spacing.xs,
+    fontSize: 12,
+    fontWeight: "500",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   confidenceValue: {
-    ...typography.heading3,
-    color: colors.text,
-    marginBottom: spacing.sm,
+    fontSize: 48,
+    fontWeight: "900",
+    marginVertical: 4,
   },
-  confidenceBar: {
-    width: '100%',
-    height: 8,
-    backgroundColor: colors.border,
-    borderRadius: 4,
-    overflow: 'hidden',
+  confidenceLevelText: {
+    fontSize: 13,
+    fontWeight: "600",
+    marginTop: 4,
   },
-  confidenceFill: {
-    height: '100%',
-    borderRadius: 4,
+  imageSection: {
+    paddingHorizontal: 16,
+    marginBottom: 12,
   },
-  positiveBar: {
-    backgroundColor: colors.error,
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    marginBottom: 12,
   },
-  negativeBar: {
-    backgroundColor: colors.success,
+  image: {
+    width: "100%",
+    height: 280,
+    borderRadius: 12,
   },
-  summaryCard: {
-    marginBottom: spacing.lg,
+  detailsCard: {
+    margin: 16,
+    marginBottom: 12,
+    padding: 16,
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  summaryTitle: {
-    ...typography.heading3,
-    color: colors.text,
-    marginBottom: spacing.md,
+  detailRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    paddingVertical: 8,
   },
-  summarySection: {
-    marginBottom: spacing.md,
+  detailIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
   },
-  summaryLabel: {
-    ...typography.body,
-    color: colors.text,
-    fontWeight: '600',
-    marginBottom: spacing.xs,
+  detailContent: {
+    flex: 1,
+  },
+  detailLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.3,
+    marginBottom: 2,
+  },
+  detailValue: {
+    fontSize: 15,
+    fontWeight: "500",
+  },
+  divider: {
+    height: 1,
+    marginVertical: 8,
   },
   characteristicsList: {
-    gap: spacing.xs,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginTop: 8,
+    gap: 6,
   },
-  characteristicItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: spacing.sm,
-  },
-  checkmark: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors.primary,
-    marginRight: spacing.sm,
+  characteristicBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
   },
   characteristicText: {
-    ...typography.body,
-    color: colors.textSecondary,
+    fontSize: 12,
+    fontWeight: "600",
   },
-  summaryValue: {
-    ...typography.body,
-    color: colors.textSecondary,
-    marginLeft: spacing.sm,
+  interpretationCard: {
+    margin: 16,
+    marginBottom: 12,
+    padding: 16,
+    borderRadius: 12,
+    borderLeftWidth: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  thumbnailImage: {
-    width: 100,
-    height: 100,
-    borderRadius: spacing.sm,
-    marginTop: spacing.xs,
-    marginLeft: spacing.sm,
+  interpretationHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
   },
-  actionsCard: {
-    marginBottom: spacing.lg,
+  interpretationTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    marginLeft: 8,
   },
-  actionsTitle: {
-    ...typography.heading3,
-    color: colors.text,
-    marginBottom: spacing.md,
-    textAlign: 'center',
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginBottom: spacing.md,
-  },
-  actionButton: {
-    flex: 1,
-  },
-  navigationButtons: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  navButton: {
-    flex: 1,
-  },
-  warningCard: {
-    backgroundColor: colors.warning + '10',
-    borderColor: colors.warning,
-  },
-  warningTitle: {
-    ...typography.heading3,
-    color: colors.text,
-    marginBottom: spacing.sm,
-  },
-  warningText: {
-    ...typography.body,
-    color: colors.text,
+  interpretationText: {
+    fontSize: 14,
     lineHeight: 22,
   },
+  recommendationsCard: {
+    margin: 16,
+    marginBottom: 12,
+    padding: 16,
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  recommendationsHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  recommendationsTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    marginLeft: 8,
+  },
+  recommendationsList: {
+    gap: 10,
+  },
+  recommendationItem: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+  },
+  recommendationDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginTop: 6,
+    marginRight: 12,
+  },
+  recommendationText: {
+    fontSize: 14,
+    lineHeight: 20,
+    flex: 1,
+  },
+  actionButtonsSection: {
+    paddingHorizontal: 16,
+    gap: 10,
+    marginBottom: 16,
+  },
+  actionButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 14,
+    borderRadius: 10,
+    gap: 10,
+  },
+  primaryActionButton: {
+    // Background dynamic
+  },
+  actionButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  secondaryActionButton: {
+    borderWidth: 2,
+  },
+  secondaryActionButtonText: {
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  outlineActionButton: {
+    borderWidth: 1,
+  },
+  apiStatusSection: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    gap: 8,
+  },
+  statusIndicator: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  apiStatusText: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
 });
+

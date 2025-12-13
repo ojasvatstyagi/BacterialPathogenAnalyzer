@@ -1,4 +1,3 @@
-// app/(tabs)/analyze/index.tsx
 
 import React from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
@@ -13,7 +12,8 @@ import {
 } from "lucide-react-native";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { colors, typography, spacing, shadows } from "@/constants/theme";
+import { useTheme } from "@/context/ThemeContext";
+import { typography, spacing } from "@/constants/theme";
 
 const AnalysisStep = ({
   icon: Icon,
@@ -27,50 +27,82 @@ const AnalysisStep = ({
   description: string;
   stepNumber: number;
   isLast: boolean;
-}) => (
-  <View style={styles.stepContainer}>
-    <View style={styles.stepHeader}>
-      {/* Vertical Line Connector */}
-      {!isLast && <View style={styles.stepLine} />}
+}) => {
+  const { colors } = useTheme();
 
-      <View style={styles.stepIconContainer}>
-        <Icon size={24} color={colors.primary} />
+  return (
+    <View style={styles.stepContainer}>
+      <View style={styles.stepHeader}>
+        {/* Vertical Line Connector */}
+        {!isLast && (
+          <View style={[styles.stepLine, { backgroundColor: colors.border }]} />
+        )}
+
+        <View
+          style={[
+            styles.stepIconContainer,
+            { backgroundColor: colors.primary + "15" },
+          ]}
+        >
+          <Icon size={24} color={colors.primary} />
+        </View>
+        <View style={[styles.stepNumber, { backgroundColor: colors.primary, borderColor: colors.surface }]}>
+          <Text style={[styles.stepNumberText, { color: colors.surface }]}>
+            {stepNumber}
+          </Text>
+        </View>
       </View>
-      <View style={styles.stepNumber}>
-        <Text style={[styles.stepNumberText, { color: colors.surface }]}>
-          {stepNumber}
+      <View style={styles.stepContent}>
+        <Text style={[styles.stepTitle, { color: colors.text }]}>{title}</Text>
+        <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
+          {description}
         </Text>
       </View>
     </View>
-    <View style={styles.stepContent}>
-      <Text style={styles.stepTitle}>{title}</Text>
-      <Text style={styles.stepDescription}>{description}</Text>
-    </View>
-  </View>
-);
+  );
+};
 
 export default function AnalyzeScreen() {
+  const { colors, shadows } = useTheme();
+
   const handleStartAnalysis = () => {
     router.push("/analyze/characteristics");
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.content} bounces={true}>
         <View style={styles.header}>
-          <Text style={styles.title}>Bacterial Analysis</Text>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.title, { color: colors.text }]}>
+            Bacterial Analysis
+          </Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             Professional diagnostic workflow for Burkholderia pseudomallei
             identification
           </Text>
         </View>
 
-        <Card style={styles.heroCard}>
-          <View style={styles.heroIcon}>
+        <Card
+          style={[
+            styles.heroCard,
+            {
+              backgroundColor: colors.primary + "08",
+              borderColor: colors.primary + "20",
+            },
+          ]}
+        >
+          <View
+            style={[
+              styles.heroIcon,
+              { backgroundColor: colors.primary + "15" },
+            ]}
+          >
             <Microscope size={48} color={colors.primary} />
           </View>
-          <Text style={styles.heroTitle}>Start New Analysis</Text>
-          <Text style={styles.heroDescription}>
+          <Text style={[styles.heroTitle, { color: colors.text }]}>
+            Start New Analysis
+          </Text>
+          <Text style={[styles.heroDescription, { color: colors.textSecondary }]}>
             Follow our guided 5-step process to analyze bacterial samples with
             confidence
           </Text>
@@ -81,9 +113,11 @@ export default function AnalyzeScreen() {
           />
         </Card>
 
-        <Card style={styles.processCard}>
-          <Text style={styles.processTitle}>Analysis Process</Text>
-          <Text style={styles.processDescription}>
+        <Card style={[styles.processCard, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.processTitle, { color: colors.text }]}>
+            Analysis Process
+          </Text>
+          <Text style={[styles.processDescription, { color: colors.textSecondary }]}>
             Our streamlined workflow ensures accurate and reliable results
           </Text>
 
@@ -137,7 +171,6 @@ export default function AnalyzeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   content: {
     padding: spacing.lg,
@@ -149,13 +182,11 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.heading1,
-    color: colors.text,
     textAlign: "center",
     marginBottom: spacing.sm,
   },
   subtitle: {
     ...typography.body,
-    color: colors.textSecondary,
     textAlign: "center",
     lineHeight: 24,
     maxWidth: 320,
@@ -163,29 +194,23 @@ const styles = StyleSheet.create({
   heroCard: {
     alignItems: "center",
     marginBottom: spacing.lg,
-    backgroundColor: colors.primary + "08",
     borderWidth: 1,
-    borderColor: colors.primary + "20",
-    ...shadows.md,
   },
   heroIcon: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: colors.primary + "15",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: spacing.md,
   },
   heroTitle: {
     ...typography.heading2,
-    color: colors.text,
     textAlign: "center",
     marginBottom: spacing.sm,
   },
   heroDescription: {
     ...typography.body,
-    color: colors.textSecondary,
     textAlign: "center",
     marginBottom: spacing.lg,
     lineHeight: 24,
@@ -195,17 +220,14 @@ const styles = StyleSheet.create({
   },
   processCard: {
     marginBottom: spacing.lg,
-    backgroundColor: colors.surface,
   },
   processTitle: {
     ...typography.heading2,
-    color: colors.text,
     textAlign: "center",
     marginBottom: spacing.sm,
   },
   processDescription: {
     ...typography.body,
-    color: colors.textSecondary,
     textAlign: "center",
     marginBottom: spacing.xl,
   },
@@ -228,7 +250,6 @@ const styles = StyleSheet.create({
     top: 50,
     bottom: 0,
     width: 2,
-    backgroundColor: colors.border,
     left: 23,
     zIndex: 0,
   },
@@ -236,7 +257,6 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: colors.primary + "15",
     alignItems: "center",
     justifyContent: "center",
     zIndex: 1,
@@ -248,16 +268,13 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
     zIndex: 2,
     borderWidth: 2,
-    borderColor: colors.surface,
   },
   stepNumberText: {
     ...typography.caption,
-    color: colors.surface,
     fontWeight: "700",
     fontSize: 12,
   },
@@ -267,12 +284,10 @@ const styles = StyleSheet.create({
   },
   stepTitle: {
     ...typography.heading3,
-    color: colors.text,
     marginBottom: spacing.xs,
   },
   stepDescription: {
     ...typography.body,
-    color: colors.textSecondary,
     lineHeight: 22,
   },
 });
