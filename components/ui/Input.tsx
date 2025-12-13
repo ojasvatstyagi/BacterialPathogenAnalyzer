@@ -7,18 +7,20 @@ import {
   View,
   StyleSheet,
   TextInputProps,
+  StyleProp,
   ViewStyle,
   TouchableOpacity,
   NativeSyntheticEvent,
   TextInputFocusEventData,
 } from "react-native";
 import { Eye, EyeOff } from "lucide-react-native";
-import { colors, typography, spacing, borderRadius } from "@/constants/theme";
+import { typography, spacing, borderRadius } from "@/constants/theme";
+import { useTheme } from "@/context/ThemeContext";
 
 interface InputProps extends TextInputProps {
   label?: string;
   error?: string;
-  containerStyle?: ViewStyle;
+  containerStyle?: StyleProp<ViewStyle>;
   showPasswordToggle?: boolean;
 }
 
@@ -38,6 +40,7 @@ export const Input = forwardRef<any, InputProps>(function Input(
   }: InputProps,
   ref
 ) {
+  const { colors } = useTheme();
   const [isFocused, setIsFocused] = React.useState(false);
   // Initialize isPasswordVisible based on whether secureTextEntry is true
   const [isPasswordVisible, setIsPasswordVisible] = React.useState(false);
@@ -68,21 +71,26 @@ export const Input = forwardRef<any, InputProps>(function Input(
 
   return (
     <View style={[styles.container, containerStyle]}>
-      {label && <Text style={styles.label}>{label}</Text>}
+      {label && <Text style={[styles.label, { color: colors.text }]}>{label}</Text>}
       <View style={styles.inputContainer}>
         <TextInput
           // 3. Attach the 'ref' to the native <TextInput> component
           ref={ref}
           style={[
             styles.input,
-            isFocused && styles.inputFocused,
-            error && styles.inputError,
+            {
+              borderColor: colors.border,
+              backgroundColor: colors.surface,
+              color: colors.text,
+            },
+            isFocused && { borderColor: colors.primary, borderWidth: 2 },
+            error && { borderColor: colors.error },
             showPasswordToggle && styles.inputWithToggle,
             style,
           ]}
           onFocus={handleFocus} // Use wrapped handler
           onBlur={handleBlur} // Use wrapped handler
-          placeholderTextColor={colors.disabled}
+          placeholderTextColor={colors.textSecondary}
           secureTextEntry={actualSecureTextEntry}
           {...props}
         />
@@ -100,7 +108,7 @@ export const Input = forwardRef<any, InputProps>(function Input(
           </TouchableOpacity>
         )}
       </View>
-      {error && <Text style={styles.error}>{error}</Text>}
+      {error && <Text style={[styles.error, { color: colors.error }]}>{error}</Text>}
     </View>
   );
 });
@@ -113,7 +121,6 @@ const styles = StyleSheet.create({
   },
   label: {
     ...typography.caption,
-    color: colors.text,
     marginBottom: spacing.xs,
     fontWeight: "600",
   },
@@ -123,23 +130,13 @@ const styles = StyleSheet.create({
   input: {
     ...typography.body,
     borderWidth: 1,
-    borderColor: colors.border,
     borderRadius: borderRadius.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    backgroundColor: colors.surface,
-    color: colors.text,
     minHeight: 48,
   },
   inputWithToggle: {
     paddingRight: 48,
-  },
-  inputFocused: {
-    borderColor: colors.primary,
-    borderWidth: 2, // Increased border width for focus ring
-  },
-  inputError: {
-    borderColor: colors.error,
   },
   toggleButton: {
     position: "absolute",
@@ -154,7 +151,6 @@ const styles = StyleSheet.create({
   },
   error: {
     ...typography.caption,
-    color: colors.error,
     marginTop: spacing.xs,
   },
 });
