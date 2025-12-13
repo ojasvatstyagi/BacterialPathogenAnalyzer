@@ -17,9 +17,11 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { useAuth } from "@/context/AuthContext";
-import { colors, typography, spacing } from "@/constants/theme";
+import { typography, spacing } from "@/constants/theme";
+import { useTheme } from "@/context/ThemeContext";
 
 export default function RegisterScreen() {
+  const { colors } = useTheme();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -124,7 +126,7 @@ export default function RegisterScreen() {
       console.error("Registration error:", err);
       setFormError(
         err.message ||
-          "Registration failed. Please check your connection and try again."
+        "Registration failed. Please check your connection and try again."
       );
     } finally {
       setLoading(false);
@@ -132,15 +134,15 @@ export default function RegisterScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <View style={styles.content}>
           <View style={styles.header}>
-            <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>
+            <Text style={[styles.title, { color: colors.text }]}>Create Account</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
               Join the professional network for bacterial pathogen analysis
             </Text>
           </View>
@@ -150,7 +152,7 @@ export default function RegisterScreen() {
             keyboardShouldPersistTaps="handled" // Improved keyboard handling
           >
             <Card>
-              <Text style={styles.cardTitle}>Sign Up</Text>
+              <Text style={[styles.cardTitle, { color: colors.text }]}>Sign Up</Text>
               <View style={styles.nameRow}>
                 <Input
                   label="First Name"
@@ -222,16 +224,16 @@ export default function RegisterScreen() {
                 returnKeyType="done"
                 onSubmitEditing={handleSignUp}
               />
-              {formError && <Text style={styles.errorText}>{formError}</Text>}
+              {formError && <Text style={[styles.errorText, { color: colors.error }]}>{formError}</Text>}
               <Button
                 title={loading ? "Creating..." : "Sign Up"}
                 onPress={handleSignUp}
                 disabled={loading}
               />
               <View style={styles.footer}>
-                <Text style={styles.footerText}>
+                <Text style={[styles.footerText, { color: colors.textSecondary }]}>
                   Already have an account?{" "}
-                  <Link href="/(auth)/login" style={styles.link}>
+                  <Link href="/(auth)/login" style={[styles.link, { color: colors.primary }]}>
                     Sign in
                   </Link>
                 </Text>
@@ -247,7 +249,6 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   content: {
     flex: 1,
@@ -260,13 +261,11 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.heading1,
-    color: colors.text,
     textAlign: "center",
     marginBottom: spacing.sm,
   },
   subtitle: {
     ...typography.body,
-    color: colors.textSecondary,
     textAlign: "center",
     maxWidth: 300,
   },
@@ -279,7 +278,6 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     ...typography.heading2,
-    color: colors.text,
     textAlign: "center",
     marginBottom: spacing.lg,
   },
@@ -292,7 +290,6 @@ const styles = StyleSheet.create({
   },
   errorText: {
     ...typography.body,
-    color: colors.error,
     textAlign: "center",
     marginTop: spacing.md,
     marginBottom: spacing.sm,
@@ -303,10 +300,8 @@ const styles = StyleSheet.create({
   },
   footerText: {
     ...typography.body,
-    color: colors.textSecondary,
   },
   link: {
-    color: colors.primary,
     fontWeight: "600",
   },
 });

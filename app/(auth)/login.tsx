@@ -16,9 +16,11 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { useAuth } from "@/context/AuthContext";
-import { colors, typography, spacing } from "@/constants/theme";
+import { typography, spacing } from "@/constants/theme";
+import { useTheme } from "@/context/ThemeContext";
 
 export default function LoginScreen() {
+  const { colors } = useTheme();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -74,7 +76,7 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         // Using "height" for smoother Android behavior
@@ -82,8 +84,8 @@ export default function LoginScreen() {
       >
         <View style={styles.content}>
           <View style={styles.header}>
-            <Text style={styles.title}>Bacterial Pathogen Analyzer</Text>
-            <Text style={styles.subtitle}>
+            <Text style={[styles.title, { color: colors.text }]}>Bacterial Pathogen Analyzer</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
               Professional diagnostic tool for Burkholderia pseudomallei
               identification
             </Text>
@@ -94,7 +96,7 @@ export default function LoginScreen() {
             keyboardShouldPersistTaps="handled" // Ensures keyboard doesn't dismiss easily
           >
             <Card>
-              <Text style={styles.cardTitle}>Sign In</Text>
+              <Text style={[styles.cardTitle, { color: colors.text }]}>Sign In</Text>
               <Input
                 label="Email Address"
                 value={email}
@@ -129,11 +131,11 @@ export default function LoginScreen() {
                 style={styles.signInButton}
               />
               {/* Smoother Error Handling: Display form error here */}
-              {formError && <Text style={styles.errorText}>{formError}</Text>}
+              {formError && <Text style={[styles.errorText, { color: colors.error }]}>{formError}</Text>}
               <View style={styles.footer}>
-                <Text style={styles.footerText}>
+                <Text style={[styles.footerText, { color: colors.textSecondary }]}>
                   Don't have an account?{" "}
-                  <Link href="/(auth)/register" style={styles.link}>
+                  <Link href="/(auth)/register" style={[styles.link, { color: colors.primary }]}>
                     Sign up
                   </Link>
                 </Text>
@@ -149,7 +151,6 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   content: {
     flex: 1,
@@ -162,13 +163,11 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.heading1,
-    color: colors.text,
     textAlign: "center",
     marginBottom: spacing.sm,
   },
   subtitle: {
     ...typography.body,
-    color: colors.textSecondary,
     textAlign: "center",
     maxWidth: 300,
   },
@@ -181,7 +180,6 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     ...typography.heading2,
-    color: colors.text,
     textAlign: "center",
     marginBottom: spacing.lg,
   },
@@ -194,15 +192,12 @@ const styles = StyleSheet.create({
   },
   footerText: {
     ...typography.body,
-    color: colors.textSecondary,
   },
   link: {
-    color: colors.primary,
     fontWeight: "600",
   },
   errorText: {
     ...typography.body,
-    color: colors.error,
     textAlign: "center",
     marginTop: spacing.md,
     marginBottom: spacing.sm,
