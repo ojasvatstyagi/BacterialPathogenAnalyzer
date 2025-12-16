@@ -58,10 +58,10 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       },
       // These are intentionally read from process.env at build time (EAS).
       // They must be set as EAS secrets or CI env variables; do NOT commit actual values.
-      EXPO_PUBLIC_SUPABASE_URL,
-      EXPO_PUBLIC_SUPABASE_ANON_KEY,
-      EXPO_PUBLIC_API_URL,
-      EXPO_PUBLIC_MODEL_URL,
+      EXPO_PUBLIC_SUPABASE_URL: process.env.EXPO_PUBLIC_SUPABASE_URL,
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
+      EXPO_PUBLIC_API_URL: process.env.EXPO_PUBLIC_API_URL,
+      apiUrl: process.env.EXPO_PUBLIC_API_URL,
     },
     owner: 'ojasvats',
   };
