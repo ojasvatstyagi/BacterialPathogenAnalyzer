@@ -9,6 +9,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     EXPO_PUBLIC_SUPABASE_URL,
     EXPO_PUBLIC_SUPABASE_ANON_KEY,
     EXPO_PUBLIC_API_URL,
+    EXPO_PUBLIC_MODEL_URL,
   } = process.env;
 
   if (!EXPO_PUBLIC_SUPABASE_URL || !EXPO_PUBLIC_SUPABASE_ANON_KEY) {
@@ -18,7 +19,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     // eslint-disable-next-line no-console
     console.warn(
       'Build-time warning: EXPO_PUBLIC_SUPABASE_URL or EXPO_PUBLIC_SUPABASE_ANON_KEY is missing.\n' +
-        'Make sure you set these with `eas secret:create` or via your CI environment for EAS builds.'
+      'Make sure you set these with `eas secret:create` or via your CI environment for EAS builds.'
     );
   }
 
@@ -46,6 +47,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         backgroundColor: '#ffffff',
       },
       package: 'com.ojasvats.bacterialpathogenanalyzer',
+      // @ts-ignore
+      usesCleartextTraffic: true,
     },
     plugins: ['expo-router'],
     extra: {
@@ -58,6 +61,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       EXPO_PUBLIC_SUPABASE_URL,
       EXPO_PUBLIC_SUPABASE_ANON_KEY,
       EXPO_PUBLIC_API_URL,
+      EXPO_PUBLIC_MODEL_URL,
     },
     owner: 'ojasvats',
   };
