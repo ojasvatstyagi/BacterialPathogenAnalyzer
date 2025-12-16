@@ -86,6 +86,7 @@ Built using React Native + Expo, with Supabase powering authentication, data sto
 git clone https://github.com/ojasvatstyagi/BacterialPathogenAnalyzer.git
 cd BacterialPathogenAnalyzer
 npm install
+expo install expo-image-manipulator
 ```
 
 ## 📁 Project Structure
