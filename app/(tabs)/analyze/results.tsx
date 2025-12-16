@@ -1,4 +1,3 @@
-
 /**
  * Results Screen - Integrated with Real ML Model
  * Shows prediction results from the ML API
@@ -24,11 +23,9 @@ import {
   PredictionResponse,
 } from "@/lib/mlService";
 import { Feather } from "@expo/vector-icons";
-import { useTheme } from "@/context/ThemeContext";
-import { colors, spacing } from "@/constants/theme";
+import { COLORS } from "@/constants/theme";
 
 export default function ResultsScreen() {
-  const { colors } = useTheme();
   const router = useRouter();
   const { user } = useAuth();
   const params = useLocalSearchParams();
@@ -36,7 +33,7 @@ export default function ResultsScreen() {
   // Parse parameters from previous screens
   const characteristics = JSON.parse(
     (params.characteristics as string) || "[]"
-  ) as string[];
+  );
   const imageUri = params.imageUri as string;
   const colonyAge = params.colonyAge as string;
 
@@ -65,14 +62,11 @@ export default function ResultsScreen() {
 
       // Check if ML API is available
       console.log("Checking ML API health...");
+      const healthy = await checkMLApiHealth();
+      setApiHealthy(healthy);
 
-      const healthStatus = await checkMLApiHealth();
-      setApiHealthy(healthStatus.healthy);
-
-      if (!healthStatus.healthy) {
-        console.warn("[Health Check Failed]", healthStatus.message);
+      if (!healthy) {
         throw new Error(
-          healthStatus.message ||
           "ML API is not available. Please ensure the backend server is running."
         );
       }
@@ -162,10 +156,10 @@ export default function ResultsScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Analyzing bacterial sample...</Text>
-        <Text style={[styles.loadingSubtext, { color: colors.textSecondary }]}>
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={styles.loadingText}>Analyzing bacterial sample...</Text>
+        <Text style={styles.loadingSubtext}>
           Using AI-powered detection model
         </Text>
       </View>
@@ -174,15 +168,15 @@ export default function ResultsScreen() {
 
   if (error || !prediction) {
     return (
-      <View style={[styles.errorContainer, { backgroundColor: colors.background }]}>
-        <Feather name="alert-circle" size={64} color={colors.error} />
-        <Text style={[styles.errorText, { color: colors.error }]}>Analysis Failed</Text>
-        <Text style={[styles.errorSubtext, { color: colors.textSecondary }]}>{error || "Unknown error"}</Text>
-        <Pressable style={[styles.retryButton, { backgroundColor: colors.primary }]} onPress={performAnalysis}>
+      <View style={styles.errorContainer}>
+        <Feather name="alert-circle" size={64} color={COLORS.error} />
+        <Text style={styles.errorText}>Analysis Failed</Text>
+        <Text style={styles.errorSubtext}>{error || "Unknown error"}</Text>
+        <Pressable style={styles.retryButton} onPress={performAnalysis}>
           <Text style={styles.retryButtonText}>Retry Analysis</Text>
         </Pressable>
         <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <Text style={[styles.backButtonText, { color: colors.primary }]}>Go Back</Text>
+          <Text style={styles.backButtonText}>Go Back</Text>
         </Pressable>
       </View>
     );
@@ -191,29 +185,29 @@ export default function ResultsScreen() {
   const isBpseudomallei = prediction.is_bpseudo;
   const confidenceColor =
     prediction.confidence >= 90
-      ? colors.success
+      ? COLORS.success
       : prediction.confidence >= 70
-        ? colors.warning
-        : colors.error;
+      ? COLORS.warning
+      : COLORS.error;
 
   const confidenceLevel =
     prediction.confidence >= 90
       ? "Very High"
       : prediction.confidence >= 70
-        ? "Moderate"
-        : prediction.confidence >= 50
-          ? "Low"
-          : "Very Low";
+      ? "Moderate"
+      : prediction.confidence >= 50
+      ? "Low"
+      : "Very Low";
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* Result Header Card */}
       <View
         style={[
           styles.resultHeaderCard,
           {
-            backgroundColor: isBpseudomallei ? colors.error + "20" : colors.success + "20",
-            borderColor: isBpseudomallei ? colors.error : colors.success,
+            backgroundColor: isBpseudomallei ? "#ffe8e8" : "#e8f5e9",
+            borderColor: isBpseudomallei ? COLORS.error : COLORS.success,
           },
         ]}
       >
@@ -221,67 +215,67 @@ export default function ResultsScreen() {
           <Feather
             name={isBpseudomallei ? "alert-triangle" : "check-circle"}
             size={56}
-            color={isBpseudomallei ? colors.error : colors.success}
+            color={isBpseudomallei ? COLORS.error : COLORS.success}
             strokeWidth={1.5}
           />
         </View>
 
-        <Text style={[styles.resultTitle, { color: colors.text }]}>{prediction.result}</Text>
+        <Text style={styles.resultTitle}>{prediction.result}</Text>
 
         <View style={styles.confidenceSection}>
-          <Text style={[styles.confidenceLabel, { color: colors.textSecondary }]}>Confidence Score</Text>
+          <Text style={styles.confidenceLabel}>Confidence Score</Text>
           <Text style={[styles.confidenceValue, { color: confidenceColor }]}>
             {prediction.confidence.toFixed(1)}%
           </Text>
-          <Text style={[styles.confidenceLevelText, { color: colors.textSecondary }]}>{confidenceLevel}</Text>
+          <Text style={styles.confidenceLevelText}>{confidenceLevel}</Text>
         </View>
       </View>
 
       {/* Captured Image */}
       {imageUri && (
         <View style={styles.imageSection}>
-          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Captured Sample</Text>
-          <Image source={{ uri: imageUri }} style={[styles.image, { backgroundColor: colors.surface }]} />
+          <Text style={styles.sectionTitle}>Captured Sample</Text>
+          <Image source={{ uri: imageUri }} style={styles.image} />
         </View>
       )}
 
       {/* Analysis Details Card */}
-      <View style={[styles.detailsCard, { backgroundColor: colors.surface }]}>
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Analysis Details</Text>
+      <View style={styles.detailsCard}>
+        <Text style={styles.sectionTitle}>Analysis Details</Text>
 
         <View style={styles.detailRow}>
-          <View style={[styles.detailIcon, { backgroundColor: colors.primary + "15" }]}>
-            <Feather name="droplet" size={18} color={colors.primary} />
+          <View style={styles.detailIcon}>
+            <Feather name="droplet" size={18} color={COLORS.primary} />
           </View>
           <View style={styles.detailContent}>
-            <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Culture Medium</Text>
-            <Text style={[styles.detailValue, { color: colors.textSecondary }]}>{prediction.metadata.agar}</Text>
+            <Text style={styles.detailLabel}>Culture Medium</Text>
+            <Text style={styles.detailValue}>{prediction.metadata.agar}</Text>
           </View>
         </View>
 
-        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+        <View style={styles.divider} />
 
         <View style={styles.detailRow}>
-          <View style={[styles.detailIcon, { backgroundColor: colors.primary + "15" }]}>
-            <Feather name="clock" size={18} color={colors.primary} />
+          <View style={styles.detailIcon}>
+            <Feather name="clock" size={18} color={COLORS.primary} />
           </View>
           <View style={styles.detailContent}>
-            <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Colony Age</Text>
-            <Text style={[styles.detailValue, { color: colors.textSecondary }]}>
+            <Text style={styles.detailLabel}>Colony Age</Text>
+            <Text style={styles.detailValue}>
               {prediction.metadata.colony_age}
             </Text>
           </View>
         </View>
 
-        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+        <View style={styles.divider} />
 
         <View style={styles.detailRow}>
-          <View style={[styles.detailIcon, { backgroundColor: colors.primary + "15" }]}>
-            <Feather name="zap" size={18} color={colors.primary} />
+          <View style={styles.detailIcon}>
+            <Feather name="zap" size={18} color={COLORS.primary} />
           </View>
           <View style={styles.detailContent}>
-            <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Time Elapsed</Text>
-            <Text style={[styles.detailValue, { color: colors.textSecondary }]}>
+            <Text style={styles.detailLabel}>Time Elapsed</Text>
+            <Text style={styles.detailValue}>
               {prediction.metadata.time_hours} hours
             </Text>
           </View>
@@ -289,17 +283,17 @@ export default function ResultsScreen() {
 
         {prediction.metadata.characteristics.length > 0 && (
           <>
-            <View style={[styles.divider, { backgroundColor: colors.border }]} />
+            <View style={styles.divider} />
             <View style={styles.detailRow}>
-              <View style={[styles.detailIcon, { backgroundColor: colors.primary + "15" }]}>
-                <Feather name="list" size={18} color={colors.primary} />
+              <View style={styles.detailIcon}>
+                <Feather name="list" size={18} color={COLORS.primary} />
               </View>
               <View style={styles.detailContent}>
-                <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Characteristics</Text>
+                <Text style={styles.detailLabel}>Characteristics</Text>
                 <View style={styles.characteristicsList}>
                   {prediction.metadata.characteristics.map((char, index) => (
-                    <View key={index} style={[styles.characteristicBadge, { backgroundColor: colors.primary + "15" }]}>
-                      <Text style={[styles.characteristicText, { color: colors.primary }]}>{char}</Text>
+                    <View key={index} style={styles.characteristicBadge}>
+                      <Text style={styles.characteristicText}>{char}</Text>
                     </View>
                   ))}
                 </View>
@@ -310,27 +304,27 @@ export default function ResultsScreen() {
       </View>
 
       {/* Interpretation Card */}
-      <View style={[styles.interpretationCard, { backgroundColor: colors.surface, borderLeftColor: colors.primary }]}>
+      <View style={styles.interpretationCard}>
         <View style={styles.interpretationHeader}>
-          <Feather name="info" size={20} color={colors.primary} />
-          <Text style={[styles.interpretationTitle, { color: colors.textSecondary }]}>Interpretation</Text>
+          <Feather name="info" size={20} color={COLORS.primary} />
+          <Text style={styles.interpretationTitle}>Interpretation</Text>
         </View>
-        <Text style={[styles.interpretationText, { color: colors.textSecondary }]}>
+        <Text style={styles.interpretationText}>
           {prediction.interpretation}
         </Text>
       </View>
 
       {/* Recommendations Card */}
-      <View style={[styles.recommendationsCard, { backgroundColor: colors.surface }]}>
+      <View style={styles.recommendationsCard}>
         <View style={styles.recommendationsHeader}>
-          <Feather name="check-square" size={20} color={colors.primary} />
-          <Text style={[styles.recommendationsTitle, { color: colors.textSecondary }]}>Recommendations</Text>
+          <Feather name="check-square" size={20} color={COLORS.primary} />
+          <Text style={styles.recommendationsTitle}>Recommendations</Text>
         </View>
         <View style={styles.recommendationsList}>
           {prediction.recommendations.map((rec, index) => (
             <View key={index} style={styles.recommendationItem}>
-              <View style={[styles.recommendationDot, { backgroundColor: colors.primary }]} />
-              <Text style={[styles.recommendationText, { color: colors.textSecondary }]}>{rec}</Text>
+              <View style={styles.recommendationDot} />
+              <Text style={styles.recommendationText}>{rec}</Text>
             </View>
           ))}
         </View>
@@ -339,7 +333,7 @@ export default function ResultsScreen() {
       {/* Action Buttons */}
       <View style={styles.actionButtonsSection}>
         <Pressable
-          style={[styles.actionButton, styles.primaryActionButton, { backgroundColor: colors.primary }]}
+          style={[styles.actionButton, styles.primaryActionButton]}
           onPress={saveToHistory}
           disabled={saving}
         >
@@ -354,23 +348,19 @@ export default function ResultsScreen() {
         </Pressable>
 
         <Pressable
-          style={[styles.actionButton, styles.secondaryActionButton, { backgroundColor: colors.surface, borderColor: colors.primary }]}
+          style={[styles.actionButton, styles.secondaryActionButton]}
           onPress={sendToLab}
         >
-          <Feather name="send" size={20} color={colors.primary} />
-          <Text style={[styles.secondaryActionButtonText, { color: colors.primary }]}>Send to Lab</Text>
+          <Feather name="send" size={20} color={COLORS.primary} />
+          <Text style={styles.secondaryActionButtonText}>Send to Lab</Text>
         </Pressable>
 
         <Pressable
-          style={[
-            styles.actionButton,
-            styles.outlineActionButton,
-            { backgroundColor: colors.surface, borderColor: colors.border }
-          ]}
+          style={[styles.actionButton, styles.outlineActionButton]}
           onPress={() => router.push("/(tabs)/analyze")}
         >
-          <Feather name="plus" size={20} color={colors.primary} />
-          <Text style={[styles.secondaryActionButtonText, { color: colors.primary }]}>New Analysis</Text>
+          <Feather name="plus" size={20} color={COLORS.primary} />
+          <Text style={styles.secondaryActionButtonText}>New Analysis</Text>
         </Pressable>
       </View>
 
@@ -379,10 +369,10 @@ export default function ResultsScreen() {
         <View
           style={[
             styles.statusIndicator,
-            { backgroundColor: apiHealthy ? colors.success : colors.error },
+            { backgroundColor: apiHealthy ? COLORS.success : COLORS.error },
           ]}
         />
-        <Text style={[styles.apiStatusText, { color: colors.textSecondary }]}>
+        <Text style={styles.apiStatusText}>
           {apiHealthy ? "ML API Connected" : "ML API Disconnected"}
         </Text>
       </View>
@@ -392,43 +382,50 @@ export default function ResultsScreen() {
   );
 }
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#f8f9fa",
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "#fff",
   },
   loadingText: {
     marginTop: 16,
     fontSize: 18,
     fontWeight: "600",
+    color: COLORS.textPrimary,
   },
   loadingSubtext: {
     marginTop: 8,
     fontSize: 14,
+    color: COLORS.textSecondary,
   },
   errorContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "#fff",
     padding: 24,
   },
   errorText: {
     marginTop: 16,
     fontSize: 24,
     fontWeight: "bold",
+    color: COLORS.error,
   },
   errorSubtext: {
     marginTop: 8,
     fontSize: 14,
+    color: COLORS.textSecondary,
     textAlign: "center",
   },
   retryButton: {
     marginTop: 24,
+    backgroundColor: COLORS.primary,
     paddingHorizontal: 32,
     paddingVertical: 12,
     borderRadius: 8,
@@ -443,6 +440,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   backButtonText: {
+    color: COLORS.primary,
     fontSize: 16,
     fontWeight: "600",
   },
@@ -453,6 +451,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: "center",
     borderWidth: 2,
+    backgroundColor: "#e8f5e9",
   },
   resultIconContainer: {
     marginBottom: 12,
@@ -460,6 +459,7 @@ const styles = StyleSheet.create({
   resultTitle: {
     fontSize: 22,
     fontWeight: "700",
+    color: COLORS.textPrimary,
     textAlign: "center",
     marginBottom: 16,
   },
@@ -469,6 +469,7 @@ const styles = StyleSheet.create({
   },
   confidenceLabel: {
     fontSize: 12,
+    color: COLORS.textSecondary,
     fontWeight: "500",
     textTransform: "uppercase",
     letterSpacing: 0.5,
@@ -480,6 +481,7 @@ const styles = StyleSheet.create({
   },
   confidenceLevelText: {
     fontSize: 13,
+    color: COLORS.textSecondary,
     fontWeight: "600",
     marginTop: 4,
   },
@@ -490,17 +492,20 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: "700",
+    color: COLORS.textPrimary,
     marginBottom: 12,
   },
   image: {
     width: "100%",
     height: 280,
     borderRadius: 12,
+    backgroundColor: "#f0f0f0",
   },
   detailsCard: {
     margin: 16,
     marginBottom: 12,
     padding: 16,
+    backgroundColor: "#fff",
     borderRadius: 12,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -517,6 +522,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 8,
+    backgroundColor: COLORS.primary + "15",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
@@ -526,6 +532,7 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 12,
+    color: COLORS.textSecondary,
     fontWeight: "600",
     textTransform: "uppercase",
     letterSpacing: 0.3,
@@ -533,10 +540,12 @@ const styles = StyleSheet.create({
   },
   detailValue: {
     fontSize: 15,
+    color: COLORS.textPrimary,
     fontWeight: "500",
   },
   divider: {
     height: 1,
+    backgroundColor: "#e8e8e8",
     marginVertical: 8,
   },
   characteristicsList: {
@@ -546,20 +555,24 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   characteristicBadge: {
+    backgroundColor: COLORS.primary + "15",
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 6,
   },
   characteristicText: {
     fontSize: 12,
+    color: COLORS.primary,
     fontWeight: "600",
   },
   interpretationCard: {
     margin: 16,
     marginBottom: 12,
     padding: 16,
+    backgroundColor: "#fff",
     borderRadius: 12,
     borderLeftWidth: 4,
+    borderLeftColor: COLORS.primary,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -574,16 +587,19 @@ const styles = StyleSheet.create({
   interpretationTitle: {
     fontSize: 16,
     fontWeight: "700",
+    color: COLORS.textPrimary,
     marginLeft: 8,
   },
   interpretationText: {
     fontSize: 14,
+    color: COLORS.textSecondary,
     lineHeight: 22,
   },
   recommendationsCard: {
     margin: 16,
     marginBottom: 12,
     padding: 16,
+    backgroundColor: "#fff",
     borderRadius: 12,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -599,6 +615,7 @@ const styles = StyleSheet.create({
   recommendationsTitle: {
     fontSize: 16,
     fontWeight: "700",
+    color: COLORS.textPrimary,
     marginLeft: 8,
   },
   recommendationsList: {
@@ -612,11 +629,13 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
+    backgroundColor: COLORS.primary,
     marginTop: 6,
     marginRight: 12,
   },
   recommendationText: {
     fontSize: 14,
+    color: COLORS.textSecondary,
     lineHeight: 20,
     flex: 1,
   },
@@ -634,7 +653,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   primaryActionButton: {
-    // Background dynamic
+    backgroundColor: COLORS.primary,
   },
   actionButtonText: {
     color: "#fff",
@@ -642,14 +661,19 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   secondaryActionButton: {
+    backgroundColor: "#fff",
     borderWidth: 2,
+    borderColor: COLORS.primary,
   },
   secondaryActionButtonText: {
+    color: COLORS.primary,
     fontSize: 16,
     fontWeight: "700",
   },
   outlineActionButton: {
+    backgroundColor: "#fff",
     borderWidth: 1,
+    borderColor: "#e0e0e0",
   },
   apiStatusSection: {
     flexDirection: "row",
@@ -665,7 +689,7 @@ const styles = StyleSheet.create({
   },
   apiStatusText: {
     fontSize: 12,
+    color: COLORS.textSecondary,
     fontWeight: "600",
   },
 });
-

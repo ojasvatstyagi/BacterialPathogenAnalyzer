@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -14,8 +13,7 @@ import { Clock, Image as ImageIcon } from "lucide-react-native";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { TopBar } from "@/components/ui/TopBar";
-import { useTheme } from "@/context/ThemeContext";
-import { typography, spacing } from "@/constants/theme";
+import { colors, typography, spacing } from "@/constants/theme";
 
 const COLONY_AGES = [
   {
@@ -37,7 +35,6 @@ const COLONY_AGES = [
 ];
 
 export default function ColonyAgeScreen() {
-  const { colors } = useTheme();
   const params = useLocalSearchParams();
   const [selectedAge, setSelectedAge] = useState<string>("");
   const [analyzing, setAnalyzing] = useState(false);
@@ -47,10 +44,18 @@ export default function ColonyAgeScreen() {
   const characteristics = params.characteristics
     ? JSON.parse(params.characteristics as string)
     : [];
+  // ✅ FIXED: Changed from 'medium' to 'cultureMedium'
   const cultureMedium = params.cultureMedium as string;
   const imageUri = params.imageUri as string;
 
+  console.log("Colony age screen received:", {
+    characteristics,
+    cultureMedium,
+    imageUri: imageUri ? "✓ Present" : "✗ Missing",
+  });
+
   useEffect(() => {
+    // Reset image states when imageUri changes
     setImageError(false);
     setImageLoaded(false);
   }, [imageUri]);
@@ -68,6 +73,7 @@ export default function ColonyAgeScreen() {
 
     setAnalyzing(true);
     try {
+      // ✅ FIXED: Changed from 'medium' to 'cultureMedium'
       router.push({
         pathname: "/(tabs)/analyze/results",
         params: {
@@ -91,43 +97,51 @@ export default function ColonyAgeScreen() {
   };
 
   const handleImageLoad = () => {
+    console.log("Image loaded successfully:", imageUri);
     setImageLoaded(true);
     setImageError(false);
   };
 
+  // Function to get a properly formatted image URI
   const getImageSource = () => {
     if (!imageUri) return null;
+
+    // For web platform, we might need to handle blob URLs differently
     if (Platform.OS === "web" && imageUri.startsWith("blob:")) {
       return { uri: imageUri };
     }
+
+    // For file:// URIs, ensure they're properly formatted
     if (imageUri.startsWith("file://")) {
       return { uri: imageUri };
     }
+
+    // For other URIs, return as-is
     return { uri: imageUri };
   };
 
   const imageSource = getImageSource();
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={styles.container}>
       <TopBar title="Colony Age" subtitle="Step 4 of 4" onBack={handleBack} />
 
       <ScrollView contentContainerStyle={styles.content}>
         <Card style={styles.instructionCard}>
           <View style={styles.instructionHeader}>
-            <View style={[styles.iconContainer, { backgroundColor: colors.primary + "15" }]}>
+            <View style={styles.iconContainer}>
               <Clock size={32} color={colors.primary} />
             </View>
-            <Text style={[styles.instructionTitle, { color: colors.text }]}>Select Colony Age</Text>
+            <Text style={styles.instructionTitle}>Select Colony Age</Text>
           </View>
-          <Text style={[styles.instructionText, { color: colors.textSecondary }]}>
+          <Text style={styles.instructionText}>
             Please specify the age of the bacterial colonies in your sample.
             This information helps improve analysis accuracy.
           </Text>
         </Card>
 
         <Card style={styles.imageCard}>
-          <Text style={[styles.imageTitle, { color: colors.text }]}>Captured Sample</Text>
+          <Text style={styles.imageTitle}>Captured Sample</Text>
 
           {imageSource && !imageError ? (
             <View style={styles.imageContainer}>
@@ -135,7 +149,6 @@ export default function ColonyAgeScreen() {
                 source={imageSource}
                 style={[
                   styles.sampleImage,
-                  { borderColor: colors.border },
                   !imageLoaded && styles.imageLoading,
                 ]}
                 onError={handleImageError}
@@ -144,28 +157,28 @@ export default function ColonyAgeScreen() {
                 resizeMode="cover"
               />
               {!imageLoaded && !imageError && (
-                <View style={[styles.loadingOverlay, { backgroundColor: colors.background, opacity: 0.8 }]}>
-                  <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Loading image...</Text>
+                <View style={styles.loadingOverlay}>
+                  <Text style={styles.loadingText}>Loading image...</Text>
                 </View>
               )}
             </View>
           ) : (
-            <View style={[styles.imagePlaceholder, { borderColor: colors.border, backgroundColor: colors.background }]}>
+            <View style={styles.imagePlaceholder}>
               <ImageIcon size={48} color={colors.disabled} />
-              <Text style={[styles.imagePlaceholderText, { color: colors.disabled }]}>
+              <Text style={styles.imagePlaceholderText}>
                 {imageError
                   ? "Failed to load captured image"
                   : "No image available"}
               </Text>
               {imageError && imageUri && (
                 <View style={styles.errorDetails}>
-                  <Text style={[styles.imageUriText, { color: colors.error }]}>
+                  <Text style={styles.imageUriText}>
                     URI:{" "}
                     {imageUri.length > 60
                       ? `${imageUri.substring(0, 60)}...`
                       : imageUri}
                   </Text>
-                  <Text style={[styles.errorHint, { color: colors.textSecondary }]}>
+                  <Text style={styles.errorHint}>
                     {Platform.OS === "web"
                       ? "Web platform image loading issue"
                       : "Image file may be corrupted"}
@@ -177,7 +190,7 @@ export default function ColonyAgeScreen() {
         </Card>
 
         <Card style={styles.ageSelectionCard}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Colony Age Options</Text>
+          <Text style={styles.sectionTitle}>Colony Age Options</Text>
 
           <View style={styles.ageOptions}>
             {COLONY_AGES.map((age) => (
@@ -188,39 +201,30 @@ export default function ColonyAgeScreen() {
                   variant={selectedAge === age.value ? "primary" : "outline"}
                   style={{
                     ...styles.ageOptionButton,
-                    ...(selectedAge === age.value && { backgroundColor: colors.primary + "20" }),
+                    ...(selectedAge === age.value && styles.selectedAgeButton),
                   }}
                 />
                 <View
                   style={[
                     styles.ageOptionContent,
-                    {
-                      borderColor: colors.border,
-                      backgroundColor: colors.surface
-                    },
-                    selectedAge === age.value && {
-                      borderColor: colors.primary,
-                      backgroundColor: colors.primary + "08",
-                    },
+                    selectedAge === age.value && styles.selectedAgeContent,
                   ]}
                 >
                   <View style={styles.ageOptionHeader}>
                     <View
                       style={[
                         styles.radioButton,
-                        { borderColor: colors.border },
-                        selectedAge === age.value && { borderColor: colors.primary },
+                        selectedAge === age.value && styles.radioButtonSelected,
                       ]}
                     >
                       {selectedAge === age.value && (
-                        <View style={[styles.radioButtonInner, { backgroundColor: colors.primary }]} />
+                        <View style={styles.radioButtonInner} />
                       )}
                     </View>
                     <Text
                       style={[
                         styles.ageOptionLabel,
-                        { color: colors.text },
-                        selectedAge === age.value && { color: colors.primary },
+                        selectedAge === age.value && styles.selectedAgeLabel,
                       ]}
                     >
                       {age.label}
@@ -229,8 +233,8 @@ export default function ColonyAgeScreen() {
                   <Text
                     style={[
                       styles.ageOptionDescription,
-                      { color: colors.textSecondary },
-                      selectedAge === age.value && { color: colors.text },
+                      selectedAge === age.value &&
+                        styles.selectedAgeDescription,
                     ]}
                   >
                     {age.description}
@@ -241,8 +245,8 @@ export default function ColonyAgeScreen() {
           </View>
 
           {selectedAge && (
-            <View style={[styles.selectedInfo, { backgroundColor: colors.primary + "10", borderColor: colors.primary + "30" }]}>
-              <Text style={[styles.selectedText, { color: colors.primary }]}>
+            <View style={styles.selectedInfo}>
+              <Text style={styles.selectedText}>
                 Selected:{" "}
                 {COLONY_AGES.find((age) => age.value === selectedAge)?.label}
               </Text>
@@ -250,16 +254,16 @@ export default function ColonyAgeScreen() {
           )}
         </Card>
 
-        <Card style={[styles.summaryCard, { backgroundColor: colors.primary + "08", borderColor: colors.primary + "20" }]}>
-          <Text style={[styles.summaryTitle, { color: colors.text }]}>Analysis Summary</Text>
+        <Card style={styles.summaryCard}>
+          <Text style={styles.summaryTitle}>Analysis Summary</Text>
 
           <View style={styles.summarySection}>
-            <Text style={[styles.summaryLabel, { color: colors.text }]}>Characteristics:</Text>
+            <Text style={styles.summaryLabel}>Characteristics:</Text>
             <View style={styles.characteristicsList}>
               {characteristics.map((characteristic: string, index: number) => (
                 <View key={index} style={styles.characteristicItem}>
-                  <View style={[styles.checkmark, { backgroundColor: colors.primary }]} />
-                  <Text style={[styles.characteristicText, { color: colors.textSecondary }]}>
+                  <View style={styles.checkmark} />
+                  <Text style={styles.characteristicText}>
                     {characteristic}
                   </Text>
                 </View>
@@ -268,14 +272,14 @@ export default function ColonyAgeScreen() {
           </View>
 
           <View style={styles.summarySection}>
-            <Text style={[styles.summaryLabel, { color: colors.text }]}>Culture Medium:</Text>
-            <Text style={[styles.summaryValue, { color: colors.textSecondary }]}>{cultureMedium}</Text>
+            <Text style={styles.summaryLabel}>Culture Medium:</Text>
+            <Text style={styles.summaryValue}>{cultureMedium}</Text>
           </View>
 
           {selectedAge && (
             <View style={styles.summarySection}>
-              <Text style={[styles.summaryLabel, { color: colors.text }]}>Colony Age:</Text>
-              <Text style={[styles.summaryValue, { color: colors.textSecondary }]}>
+              <Text style={styles.summaryLabel}>Colony Age:</Text>
+              <Text style={styles.summaryValue}>
                 {COLONY_AGES.find((age) => age.value === selectedAge)?.label}
               </Text>
             </View>
@@ -294,10 +298,10 @@ export default function ColonyAgeScreen() {
   );
 }
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.background,
   },
   content: {
     padding: spacing.lg,
@@ -314,16 +318,19 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
+    backgroundColor: colors.primary + "15",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: spacing.sm,
   },
   instructionTitle: {
     ...typography.heading2,
+    color: colors.text,
     textAlign: "center",
   },
   instructionText: {
     ...typography.body,
+    color: colors.textSecondary,
     textAlign: "center",
     lineHeight: 24,
   },
@@ -333,6 +340,7 @@ const styles = StyleSheet.create({
   },
   imageTitle: {
     ...typography.heading3,
+    color: colors.text,
     marginBottom: spacing.md,
   },
   imageContainer: {
@@ -345,6 +353,7 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: spacing.md,
     borderWidth: 2,
+    borderColor: colors.border,
   },
   imageLoading: {
     opacity: 0.5,
@@ -357,10 +366,12 @@ const styles = StyleSheet.create({
     bottom: 0,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
     borderRadius: spacing.md,
   },
   loadingText: {
     ...typography.caption,
+    color: colors.textSecondary,
     fontWeight: "600",
   },
   imagePlaceholder: {
@@ -368,13 +379,16 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: spacing.md,
     borderWidth: 2,
+    borderColor: colors.border,
     borderStyle: "dashed",
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: colors.background,
     padding: spacing.md,
   },
   imagePlaceholderText: {
     ...typography.caption,
+    color: colors.disabled,
     marginTop: spacing.sm,
     textAlign: "center",
     fontWeight: "600",
@@ -385,6 +399,7 @@ const styles = StyleSheet.create({
   },
   imageUriText: {
     ...typography.caption,
+    color: colors.error,
     marginTop: spacing.xs,
     fontSize: 10,
     textAlign: "center",
@@ -392,6 +407,7 @@ const styles = StyleSheet.create({
   },
   errorHint: {
     ...typography.caption,
+    color: colors.textSecondary,
     marginTop: spacing.xs,
     fontSize: 10,
     textAlign: "center",
@@ -402,6 +418,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...typography.heading3,
+    color: colors.text,
     marginBottom: spacing.lg,
   },
   ageOptions: {
@@ -419,10 +436,19 @@ const styles = StyleSheet.create({
     opacity: 0,
     zIndex: 1,
   },
+  selectedAgeButton: {
+    backgroundColor: colors.primary + "20",
+  },
   ageOptionContent: {
     padding: spacing.md,
     borderWidth: 1,
+    borderColor: colors.border,
     borderRadius: spacing.sm,
+    backgroundColor: colors.surface,
+  },
+  selectedAgeContent: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primary + "08",
   },
   ageOptionHeader: {
     flexDirection: "row",
@@ -434,40 +460,59 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
+    borderColor: colors.border,
     marginRight: spacing.sm,
     alignItems: "center",
     justifyContent: "center",
+  },
+  radioButtonSelected: {
+    borderColor: colors.primary,
   },
   radioButtonInner: {
     width: 10,
     height: 10,
     borderRadius: 5,
+    backgroundColor: colors.primary,
   },
   ageOptionLabel: {
     ...typography.body,
+    color: colors.text,
     fontWeight: "600",
+  },
+  selectedAgeLabel: {
+    color: colors.primary,
   },
   ageOptionDescription: {
     ...typography.caption,
+    color: colors.textSecondary,
     marginLeft: 32,
+  },
+  selectedAgeDescription: {
+    color: colors.text,
   },
   selectedInfo: {
     marginTop: spacing.md,
     padding: spacing.md,
+    backgroundColor: colors.primary + "10",
     borderRadius: spacing.sm,
     borderWidth: 1,
+    borderColor: colors.primary + "30",
   },
   selectedText: {
     ...typography.body,
+    color: colors.primary,
     fontWeight: "600",
     textAlign: "center",
   },
   summaryCard: {
     marginBottom: spacing.lg,
+    backgroundColor: colors.primary + "08",
     borderWidth: 1,
+    borderColor: colors.primary + "20",
   },
   summaryTitle: {
     ...typography.heading3,
+    color: colors.text,
     marginBottom: spacing.md,
   },
   summarySection: {
@@ -475,6 +520,7 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     ...typography.body,
+    color: colors.text,
     fontWeight: "600",
     marginBottom: spacing.xs,
   },
@@ -490,17 +536,19 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
+    backgroundColor: colors.primary,
     marginRight: spacing.sm,
   },
   characteristicText: {
     ...typography.body,
+    color: colors.textSecondary,
   },
   summaryValue: {
     ...typography.body,
+    color: colors.textSecondary,
     marginLeft: spacing.sm,
   },
   analyzeButton: {
     marginTop: spacing.md,
   },
 });
-
