@@ -277,9 +277,11 @@ export default function ProfileScreen() {
             icon={User}
             title="Edit Profile"
             subtitle="Update your name and password"
+            buttonTitle="Edit"
             onPress={() => router.push("/(tabs)/profile/edit-profile")}
           />
 
+          <Text> Comming soon.....</Text>
           <ProfileOption
             icon={Mail}
             title="Email Notifications"
@@ -317,32 +319,18 @@ export default function ProfileScreen() {
           <ProfileOption
             icon={FileText}
             title="Export Data"
+            buttonTitle="Export"
             subtitle="Download your analysis history"
             onPress={handleExportData}
             loading={isExporting}
           />
-        </View>
-
-        <View style={styles.section}>
-          <SectionHeader title="Support & Legal" />
 
           <ProfileOption
             icon={HelpCircle}
             title="Help & Support"
+            buttonTitle="Mail Us"
             subtitle="Get help with the app"
-            onPress={() => Linking.openURL("mailto:ojas.vats.tyagi@gmail.com")}
-          />
-          <ProfileOption
-            icon={FileText}
-            title="Privacy Policy"
-            subtitle="Read our privacy policy"
-            onPress={() => Linking.openURL("https://example.com/privacy")}
-          />
-          <ProfileOption
-            icon={FileText}
-            title="Terms of Service"
-            subtitle="Read our terms of service"
-            onPress={() => Linking.openURL("https://example.com/terms")}
+            onPress={() => Linking.openURL("mailto:ojastyagi753@gmail.com")}
           />
         </View>
 

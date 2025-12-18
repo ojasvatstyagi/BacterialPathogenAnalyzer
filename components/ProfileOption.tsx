@@ -10,6 +10,7 @@ import { spacing, typography } from "@/constants/theme";
 type ProfileOptionProps = {
     icon: any;
     title: string;
+    buttonTitle?: string;
     subtitle: string;
     onPress?: () => void;
     variant?: "default" | "danger" | "switch";
@@ -20,6 +21,7 @@ type ProfileOptionProps = {
 
 export const ProfileOption: React.FC<ProfileOptionProps> = ({
     icon: Icon,
+    buttonTitle,
     title,
     subtitle,
     onPress,
@@ -83,7 +85,7 @@ export const ProfileOption: React.FC<ProfileOptionProps> = ({
                 />
             ) : (
                 <Button
-                    title={variant === "danger" ? "Delete" : "Configure"}
+                    title={variant === "danger" ? "Delete" : buttonTitle}
                     onPress={onPress}
                     variant={variant === "danger" ? "secondary" : "secondary"}
                     size="small"
