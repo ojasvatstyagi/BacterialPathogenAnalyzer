@@ -3,13 +3,11 @@
  * Handles communication with the Flask ML API
  */
 
-import * as FileSystem from "expo-file-system";
 import Constants from "expo-constants";
 import * as ImageManipulator from "expo-image-manipulator";
 
 // API Configuration
-const API_URL =
-  Constants.expoConfig?.extra?.apiUrl || "http://192.168.18.127:5000";
+const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://192.168.29.251:5000";
 
 export interface PredictionRequest {
   imageUri: string;
