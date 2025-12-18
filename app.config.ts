@@ -38,7 +38,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
     android: {
       adaptiveIcon: {
-        foregroundImage: './assets/icon.png',
+        foregroundImage: './assets/adaptive_icon.png',
         backgroundColor: '#ffffff',
       },
       package: 'com.ojasvats.bacterialpathogenanalyzer',
