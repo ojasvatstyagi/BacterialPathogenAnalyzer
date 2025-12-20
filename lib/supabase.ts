@@ -25,9 +25,17 @@ export const isSupabaseConfigured = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 if (!isSupabaseConfigured) {
   console.error(
     '[Supabase] Missing environment variables.\n' +
-      'Make sure EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY are set via EAS secrets.'
+    'Make sure EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY are set via EAS secrets.'
   );
 }
+
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
 
 export type Database = {
   public: {
@@ -66,8 +74,32 @@ export type Database = {
           colony_age?: string;
           created_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "analyses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ];
       };
     };
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      delete_user: {
+        Args: Record<string, never>
+        Returns: void
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   };
 };
 
