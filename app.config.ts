@@ -5,20 +5,13 @@
 import { ExpoConfig, ConfigContext } from '@expo/config';
 
 export default ({ config }: ConfigContext): ExpoConfig => {
-  const {
-    EXPO_PUBLIC_SUPABASE_URL,
-    EXPO_PUBLIC_SUPABASE_ANON_KEY,
-    EXPO_PUBLIC_API_URL,
-  } = process.env;
+  const { EXPO_PUBLIC_SUPABASE_URL, EXPO_PUBLIC_SUPABASE_ANON_KEY } =
+    process.env;
 
   if (!EXPO_PUBLIC_SUPABASE_URL || !EXPO_PUBLIC_SUPABASE_ANON_KEY) {
-    // Build-time warning (you'll see this when building locally or on EAS)
-    // This prevents silently building an APK with undefined credentials.
-    // Do NOT commit secrets here; set them via `eas secret:create`.
-    // eslint-disable-next-line no-console
     console.warn(
       'Build-time warning: EXPO_PUBLIC_SUPABASE_URL or EXPO_PUBLIC_SUPABASE_ANON_KEY is missing.\n' +
-        'Make sure you set these with `eas secret:create` or via your CI environment for EAS builds.'
+        'Make sure you set these with `eas secret:create` or via your CI environment for EAS builds.',
     );
   }
 
@@ -26,12 +19,13 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     ...config,
     name: 'Bacterial Pathogen Analyzer',
     slug: 'bacterialpathogenanalyzer',
+    scheme: 'bacterialpathogenanalyzer',
     version: '1.0.0',
     orientation: 'portrait',
-    icon: './assets/appLogo.png',
+    icon: './assets/icon.png',
     userInterfaceStyle: 'light',
     splash: {
-      image: './assets/appLogo.png',
+      image: './assets/icon.png',
       resizeMode: 'contain',
       backgroundColor: '#ffffff',
     },
@@ -42,10 +36,12 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
     android: {
       adaptiveIcon: {
-        foregroundImage: './assets/appLogo-no-bg.png',
+        foregroundImage: './assets/icon.png',
         backgroundColor: '#ffffff',
       },
       package: 'com.ojasvats.bacterialpathogenanalyzer',
+      // @ts-ignore
+      usesCleartextTraffic: true,
     },
     plugins: ['expo-router'],
     extra: {
@@ -53,11 +49,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       eas: {
         projectId: '7064e2b6-5136-441f-af76-3da71be28290',
       },
-      // These are intentionally read from process.env at build time (EAS).
-      // They must be set as EAS secrets or CI env variables; do NOT commit actual values.
-      EXPO_PUBLIC_SUPABASE_URL,
-      EXPO_PUBLIC_SUPABASE_ANON_KEY,
-      EXPO_PUBLIC_API_URL,
+      EXPO_PUBLIC_SUPABASE_URL: process.env.EXPO_PUBLIC_SUPABASE_URL,
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
     },
     owner: 'ojasvats',
   };

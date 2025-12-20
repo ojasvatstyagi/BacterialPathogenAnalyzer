@@ -2,32 +2,43 @@
 
 // Define light and dark specific colors for dynamic switching
 const colorPaletteLight = {
-  primary: "#B6E92D", // Lime
-  background: "#F2F2F2", // White smoke
-  surface: "#FFFFFF", // Pure white for cards/elements
-  text: "#030402", // Black
-  textSecondary: "#4F4F4F", // Darker gray for better contrast
-  accent: "#000100", // Black-2
-  border: "#E0E0E0",
-  disabled: "#9E9E9E",
+  primary: '#B6E92D', // Lime
+  background: '#F2F2F2', // White smoke
+  surface: '#FFFFFF', // Pure white for cards/elements
+  text: '#030402', // Black
+  textSecondary: '#4F4F4F', // Darker gray for better contrast
+  accent: '#000100', // Black-2
+  border: '#E0E0E0',
+  disabled: '#9E9E9E',
+};
+export const COLORS = {
+  primary: '#B6E92D',
+  secondary: '#F2F2F2',
+  textPrimary: '#1a1a1a',
+  textSecondary: '#666666',
+  success: '#4caf50',
+  warning: '#ff9800',
+  error: '#f44336',
+  successLight: '#e8f5e9',
+  errorLight: '#ffebee',
 };
 
 const colorPaletteDark = {
-  primary: "#B6E92D", // Primary color remains high-contrast
-  background: "#121212", // Deep dark background
-  surface: "#1E1E1E", // Slightly lighter dark for cards/elements
-  text: "#FFFFFF", // White text
-  textSecondary: "#A0A0A0", // Light gray secondary text
-  accent: "#FFFFFF", // White accent in dark mode
-  border: "#3A3A3A",
-  disabled: "#6A6A6A",
+  primary: '#B6E92D', // Primary color remains high-contrast
+  background: '#121212', // Deep dark background
+  surface: '#1E1E1E', // Slightly lighter dark for cards/elements
+  text: '#FFFFFF', // White text
+  textSecondary: '#A0A0A0', // Light gray secondary text
+  accent: '#FFFFFF', // White accent in dark mode
+  border: '#3A3A3A',
+  disabled: '#6A6A6A',
 };
 
 // Colors that remain constant (status colors)
 const statusColors = {
-  error: "#FF6B6B",
-  success: "#51CF66",
-  warning: "#FFD43B",
+  error: '#FF6B6B',
+  success: '#51CF66',
+  warning: '#FFD43B',
 };
 
 /**
@@ -80,39 +91,39 @@ export const borderRadius = {
 export const typography = {
   heading1: {
     fontSize: 32,
-    fontWeight: "700" as const,
+    fontWeight: '700' as const,
     lineHeight: 40,
-    fontFamily: "Inter-Bold",
+    fontFamily: 'Inter-Bold',
   },
   heading2: {
     fontSize: 24,
-    fontWeight: "600" as const,
+    fontWeight: '600' as const,
     lineHeight: 32,
-    fontFamily: "Inter-SemiBold",
+    fontFamily: 'Inter-SemiBold',
   },
   heading3: {
     fontSize: 20,
-    fontWeight: "600" as const,
+    fontWeight: '600' as const,
     lineHeight: 28,
-    fontFamily: "Inter-SemiBold",
+    fontFamily: 'Inter-SemiBold',
   },
   body: {
     fontSize: 16,
-    fontWeight: "400" as const,
+    fontWeight: '400' as const,
     lineHeight: 24,
-    fontFamily: "Inter-Regular",
+    fontFamily: 'Inter-Regular',
   },
   caption: {
     fontSize: 14,
-    fontWeight: "400" as const,
+    fontWeight: '400' as const,
     lineHeight: 20,
-    fontFamily: "Inter-Regular",
+    fontFamily: 'Inter-Regular',
   },
   button: {
     fontSize: 16,
-    fontWeight: "600" as const,
+    fontWeight: '600' as const,
     lineHeight: 24,
-    fontFamily: "Inter-SemiBold",
+    fontFamily: 'Inter-SemiBold',
   },
 };
 
@@ -126,8 +137,8 @@ export const typography = {
  */
 export const createShadows = (isDark: boolean) => {
   const shadowColor = isDark
-    ? "rgba(255, 255, 255, 0.1)" // Lighter shadow for dark background
-    : "rgba(0, 0, 0, 0.15)"; // Darker shadow for light background
+    ? 'rgba(255, 255, 255, 0.1)' // Lighter shadow for dark background
+    : 'rgba(0, 0, 0, 0.15)'; // Darker shadow for light background
 
   return {
     sm: {
