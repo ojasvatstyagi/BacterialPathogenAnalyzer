@@ -44,25 +44,34 @@ export default function HistoryScreen() {
     }
   }, [user, filter]);
 
+  const isPositive = (result: string | null): boolean => {
+    if (!result) return false;
+    const lower = result.toLowerCase();
+    return lower.startsWith("probably") || lower.startsWith("possibly");
+  };
+
   const loadAnalyses = async () => {
     try {
-      let query = supabase
+      // Fetch all for user, then filter client-side for consistent logic
+      const query = supabase
         .from("analyses")
         .select("*")
         .eq("user_id", user?.id)
         .order("created_at", { ascending: false });
 
-      if (filter === "positive") {
-        query = query.ilike("result", "%Probably%");
-      } else if (filter === "negative") {
-        query = query.not("result", "ilike", "%Probably%");
-      }
-
       const { data, error } = await query;
 
       if (error) throw error;
 
-      setAnalyses(data || []);
+      let filteredData = data || [];
+
+      if (filter === "positive") {
+        filteredData = filteredData.filter((a) => isPositive(a.result));
+      } else if (filter === "negative") {
+        filteredData = filteredData.filter((a) => !isPositive(a.result));
+      }
+
+      setAnalyses(filteredData);
     } catch (error) {
       console.error("Error loading analyses:", error);
     } finally {
@@ -89,20 +98,11 @@ export default function HistoryScreen() {
 
   const getResultColor = (result: string | null) => {
     if (!result) return colors.textSecondary;
-    return result.includes("Probably") ? colors.error : colors.success;
+    return isPositive(result) ? colors.error : colors.success;
   };
 
   const getFilteredCount = () => {
-    switch (filter) {
-      case "positive":
-        return analyses.filter((a) => a.result?.includes("Probably")).length;
-      case "negative":
-        return analyses.filter(
-          (a) => a.result && !a.result.includes("Probably")
-        ).length;
-      default:
-        return analyses.length;
-    }
+    return analyses.length;
   };
 
   if (loading) {
@@ -201,13 +201,15 @@ export default function HistoryScreen() {
                   )}
                 </View>
 
-                <View style={styles.characteristicsList}>
-                  {analysis.characteristics.map((characteristic, index) => (
-                    <Text key={index} style={[styles.characteristicItem, { color: colors.textSecondary }]}>
-                      • {characteristic}
-                    </Text>
-                  ))}
-                </View>
+                {analysis.characteristics && analysis.characteristics.length > 0 && (
+                  <View style={styles.characteristicsList}>
+                    {analysis.characteristics.map((characteristic, index) => (
+                      <Text key={index} style={[styles.characteristicItem, { color: colors.textSecondary }]}>
+                        • {characteristic}
+                      </Text>
+                    ))}
+                  </View>
+                )}
 
                 {analysis.result && (
                   <View style={[styles.resultContainer, { borderTopColor: colors.border }]}>
@@ -316,6 +318,7 @@ const styles = StyleSheet.create({
     borderRadius: spacing.sm,
     marginLeft: spacing.md,
     borderWidth: 1,
+    borderColor: '#e0e0e0',
   },
   characteristicsList: {
     marginBottom: spacing.sm,
