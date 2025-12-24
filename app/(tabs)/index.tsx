@@ -105,7 +105,8 @@ export default function HomeScreen() {
 
       const positive =
         analysesArray.filter((analysis) =>
-          analysis.result?.includes("Probably")
+          analysis.result?.includes("Probably") ||
+          analysis.result?.includes("Possibly")
         ).length || 0;
 
       const negative = total - positive;
