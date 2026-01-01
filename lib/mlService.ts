@@ -155,11 +155,21 @@ export async function predictBacterium(
         "Content-Type": "application/json",
       },
       body: JSON.stringify(payload),
-      //   timeout: 30000, // 30 second timeout
     });
 
-    // Parse response
-    const data = await response.json();
+    // Parse response text first to handle non-JSON errors gracefully
+    const responseText = await response.text();
+    console.log("Raw Server Response:", responseText); // Debugging
+
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
+      console.error("Failed to parse JSON response. Status:", response.status);
+      throw new Error(
+        `Server returned non-JSON response (Status ${response.status}). The server might have crashed or timed out.`
+      );
+    }
 
     if (!response.ok) {
       throw new Error(data.message || data.error || "Prediction failed");
