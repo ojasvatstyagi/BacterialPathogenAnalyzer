@@ -9,65 +9,69 @@ Built using React Native + Expo, with Supabase powering authentication, data sto
 
 ## Features
 
-### Core Functionality
+### 🔬 Core Diagnostic Functionality
 
-- **Multi-step Analysis Workflow**: Guided 4-step process for bacterial identification
-  - Bacterial characteristics selection
-  - Culture medium identification
-  - High-quality image capture
-  - Colony age specification
-- **Camera Integration**: Native camera support with gallery fallback
-- **AI-Powered Analysis**: Mock ML analysis with configurable confidence scores (ready for production ML integration)
-- **Comprehensive Reporting**: Detailed analysis reports with images and metadata
-- **Analysis History**: Complete history with filtering and search capabilities
-- **Data Export**: Export analysis data for external review
+- **Hybrid AI Analysis Engine**:
+  - **Visual Analysis**: Utilizes **EfficientNetB0** (TensorFlow/Keras) for state-of-the-art image classification of colony morphology.
+  - **Metadata Integration**: Processes clinical metadata (Agar type, Colony age, Characteristics) via a Multi-Layer Perceptron (MLP).
+  - **Real-time Inference**: Delivers instant diagnostic predictions with confidence intervals.
+- **Smart Image Processing**:
+  - **Intelligent Capture**: Native camera integration with auto-focus and flash control.
+  - **Preprocessing Pipeline**: Automatic cropping, grayscale conversion, and normalization to ensure consistent analysis quality.
+- **Structured Analysis Workflow**: Guided 4-step process ensuring standardized data collection:
+  1. **Bacterial Characteristics**: Selection of key morphological traits.
+  2. **Culture Medium**: Identification of growth substrate (e.g., Ashdown Agar).
+  3. **High-Fidelity Capture**: Image acquisition with quality checks.
+  4. **Colony Aging**: Temporal data for precise growth stage analysis.
 
-### Authentication & Security
+### 🛡️ Authentication & Security
 
-- **Supabase Authentication**: Email/password registration and login
-- **Row Level Security (RLS)**: Database-level security for user data isolation
-- **Secure Image Storage**: Encrypted image storage with signed URLs
-- **User Session Management**: Automatic token refresh and session persistence
-- **Account Management**: Profile editing, password updates, and account deletion
+- **Enterprise-Grade Identity Management**:
+  - **Supabase Authentication**: Secure email/password flows with JWT session management.
+  - **Row Level Security (RLS)**: Strict database policies ensuring complete data isolation and privacy.
+- **Encrypted Data Storage**:
+  - **Secure Asset Management**: AES-256 encrypted storage for sensitive clinical images.
+  - **Signed Access URLs**: Temporary, time-bounded access links for enhanced security.
+- **Account Control**: Comprehensive profile management including secure password updates and data purging capabilities.
 
-### User Experience
+### 📱 Professional User Experience
 
-- **Professional Design**: Medical-grade interface with lime accent colors
-- **Accessibility**: High contrast ratios and readable typography
-- **Cross-platform**: Native iOS and Android support via React Native
-- **Responsive Design**: Optimized for various screen sizes
-- **Offline Capability**: Local data caching for network resilience
-
-### Design System
-
-- **Custom Theme**: Professional lime (#B6E92D) and white-smoke (#F2F2F2) color palette
-- **Inter Font Family**: Optimized for medical/scientific readability
-- **Modular Components**: Reusable UI components with consistent styling
-- **Micro-interactions**: Smooth animations and transitions
+- **Clinical Interface Design**:
+  - **Medical Aesthetics**: Clean, high-contrast "Lime & Smoke" theme optimized for laboratory environments.
+  - **Responsive Layouts**: Adaptive design ensuring usability across various mobile devices.
+- **Analysis History & Insights**:
+  - **Smart Filtering**: Quickly filter results by Positive/Negative classifications.
+  - **Detailed Reporting**: Comprehensive history view with re-analysis capabilities.
+- **Offline Resilience**: Local data caching ensuring continuity in low-connectivity lab settings.
 
 ## 🛠 Technology Stack
 
-### Frontend
+### Frontend Application
+- **Framework**: React Native 0.81.4 (via Expo SDK 54)
+- **Language**: TypeScript 5.x
+- **Navigation**: Expo Router 6.0 (File-based routing)
+- **UI/UX**: 
+  - **React Native Reanimated**: Fluid, 60fps animations.
+  - **Lucide React Native**: Consistent clinical iconography.
+  - **Expo Camera**: Advanced image capture and manipulation.
 
-- **React Native 0.81.4** with TypeScript
-- **Expo SDK 54** for rapid development and deployment
-- **Expo Router 6.0** for file-based navigation
-- **React Native Reanimated** for smooth animations
-- **Expo Camera 17.0** for image capture functionality
-- **Lucide React Native** for consistent iconography
+### AI & Backend Infrastructure
+- **Machine Learning**: 
+  - **TensorFlow & Keras**: Core Deep Learning framework.
+  - **EfficientNetB0**: Optimized CNN architecture for image classification.
+  - **Scikit-learn**: Data preprocessing and encoding pipelines.
+- **API Server**: 
+  - **Python Flask**: Lightweight, high-performance WSGI server.
+  - **Gunicorn**: Production-grade HTTP server.
+  - **Hosting**: Deployed on **Render Cloud** for high availability.
+- **Database & Auth**:
+  - **Supabase**: Managed PostgreSQL with Real-time capabilities.
+  - **PostgreSQL**: Robust relational database engine.
 
-### Backend & Database
-
-- **Supabase** for authentication, database, and storage
-- **PostgreSQL** with Row Level Security (RLS)
-- **Real-time subscriptions** for live data updates
-- **Supabase Storage** for secure image handling
-
-### Development Tools
-
-- **TypeScript** for type safety
-- **Expo CLI** for development workflow
-- **ESLint & Prettier** for code quality
+### Development & Quality Assurance
+- **Versioning**: Git & GitHub
+- **Linting**: ESLint & Prettier
+- **Build System**: EAS (Expo Application Services) for CI/CD
 
 ## Quick Start
 
@@ -146,7 +150,8 @@ bacterial-pathogen-analyzer/
 ```env
 EXPO_PUBLIC_SUPABASE_URL=your_supabase_project_url
 EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-EXPO_PUBLIC_API_URL=http://localhost:3001
+# Production ML Endpoint
+EXPO_PUBLIC_API_URL=https://bacterialpathogenanalyzer.onrender.com
 ```
 
 ⚠️ Do NOT commit your .env file.
@@ -429,10 +434,27 @@ This project is licensed under the MIT License. See LICENSE file for details.
 - **Lucide**: Icon library
 - **Inter Font**: Typography design
 
+## 🚀 Future Roadmap & Investment Opportunities
+
+### Phase 1: Institutional Security & Compliance (Q2 2026)
+- **On-Premise Deployment**: Transition from cloud to localized server infrastructure for total data sovereignty.
+- **HIPAA/GDPR Compliance Suite**: Enhanced audit logs, role-based access control (RBAC), and data encryption at rest.
+
+### Phase 2: Edge Computing & Performance (Q3 2026)
+- **On-Device AI (Edge Inference)**: Implementation of **TensorFlow Lite** models directly on mobile devices.
+  - **Zero-Latency**: Instant results without network dependency.
+  - **Offline-First**: Critical functionality for rural and austere environments.
+
+### Phase 3: Clinical Interoperability (Q4 2026)
+- **LIMS Integration**: Standardized HL7/FHIR interfaces for seamless data exchange with hospital laboratory information systems.
+- **Epidemiological Dashboard**: Aggregated, anonymized reporting for regional surveillance of Melioidosis outbreaks.
+- **Multi-Pathogen Support**: Expansion of the AI engine to detect other clinically significant bacterial pathogens.
+
 ---
 
 **Bacterial Pathogen Analyzer v1.0.0**  
-Professional diagnostic tool for laboratory use  
-Built with React Native, Expo, Supabase, and modern web technologies
+*Precision Diagnostics. Anywhere.*
+Built with React Native, Expo, Supabase, and TensorFlow.
 
-For technical documentation and API references, see the `/docs` directory.
+For technical partnerships or investment inquiries, please contact:
+**Ojas Vats Tyagi** - ojastyagi753@gmail.com
