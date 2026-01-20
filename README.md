@@ -47,28 +47,31 @@ Built using React Native + Expo, with Supabase powering authentication, data sto
 ## 🛠 Technology Stack
 
 ### Frontend Application
+
 - **Framework**: React Native 0.81.4 (via Expo SDK 54)
 - **Language**: TypeScript 5.x
 - **Navigation**: Expo Router 6.0 (File-based routing)
-- **UI/UX**: 
+- **UI/UX**:
   - **React Native Reanimated**: Fluid, 60fps animations.
   - **Lucide React Native**: Consistent clinical iconography.
   - **Expo Camera**: Advanced image capture and manipulation.
 
 ### AI & Backend Infrastructure
-- **Machine Learning**: 
+
+- **Machine Learning**:
   - **TensorFlow & Keras**: Core Deep Learning framework.
   - **EfficientNetB0**: Optimized CNN architecture for image classification.
   - **Scikit-learn**: Data preprocessing and encoding pipelines.
-- **API Server**: 
+- **API Server**:
   - **Python Flask**: Lightweight, high-performance WSGI server.
   - **Gunicorn**: Production-grade HTTP server.
-  - **Hosting**: Deployed on **Render Cloud** for high availability.
+  - **Hosting**: Deployed on **AWS EC2** (t2.micro) for high availability.
 - **Database & Auth**:
   - **Supabase**: Managed PostgreSQL with Real-time capabilities.
   - **PostgreSQL**: Robust relational database engine.
 
 ### Development & Quality Assurance
+
 - **Versioning**: Git & GitHub
 - **Linting**: ESLint & Prettier
 - **Build System**: EAS (Expo Application Services) for CI/CD
@@ -151,7 +154,8 @@ bacterial-pathogen-analyzer/
 EXPO_PUBLIC_SUPABASE_URL=your_supabase_project_url
 EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 # Production ML Endpoint
-EXPO_PUBLIC_API_URL=https://bacterialpathogenanalyzer.onrender.com
+# Production ML Endpoint (See deployment.md for setup)
+EXPO_PUBLIC_API_URL=http://<YOUR_AWS_IP>:5000
 ```
 
 ⚠️ Do NOT commit your .env file.
@@ -330,7 +334,7 @@ npm run web     # Web browser
 - **Database**: Supabase (managed PostgreSQL)
 - **Storage**: Supabase Storage (S3-compatible)
 - **Authentication**: Supabase Auth
-- **API**: Mock server for development (replace with production ML service)
+- **API**: Python Flask on AWS EC2 (See `deployment.md` for full setup guide)
 
 ## 🧪 Testing
 
@@ -437,15 +441,18 @@ This project is licensed under the MIT License. See LICENSE file for details.
 ## 🚀 Future Roadmap & Investment Opportunities
 
 ### Phase 1: Institutional Security & Compliance (Q2 2026)
+
 - **On-Premise Deployment**: Transition from cloud to localized server infrastructure for total data sovereignty.
 - **HIPAA/GDPR Compliance Suite**: Enhanced audit logs, role-based access control (RBAC), and data encryption at rest.
 
 ### Phase 2: Edge Computing & Performance (Q3 2026)
+
 - **On-Device AI (Edge Inference)**: Implementation of **TensorFlow Lite** models directly on mobile devices.
   - **Zero-Latency**: Instant results without network dependency.
   - **Offline-First**: Critical functionality for rural and austere environments.
 
 ### Phase 3: Clinical Interoperability (Q4 2026)
+
 - **LIMS Integration**: Standardized HL7/FHIR interfaces for seamless data exchange with hospital laboratory information systems.
 - **Epidemiological Dashboard**: Aggregated, anonymized reporting for regional surveillance of Melioidosis outbreaks.
 - **Multi-Pathogen Support**: Expansion of the AI engine to detect other clinically significant bacterial pathogens.
@@ -453,8 +460,8 @@ This project is licensed under the MIT License. See LICENSE file for details.
 ---
 
 **Bacterial Pathogen Analyzer v1.0.0**  
-*Precision Diagnostics. Anywhere.*
+_Precision Diagnostics. Anywhere._
 Built with React Native, Expo, Supabase, and TensorFlow.
 
 For technical partnerships or investment inquiries, please contact:
-**Ojas Vats Tyagi** - ojastyagi753@gmail.com
+**Ojas Vats Tyagi** - ojas.vats.tyagi@gmail.com
