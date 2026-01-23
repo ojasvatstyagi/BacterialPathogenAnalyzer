@@ -43,7 +43,17 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       // @ts-ignore
       usesCleartextTraffic: true,
     },
-    plugins: ['expo-router'],
+    plugins: [
+      'expo-router',
+      [
+        'expo-build-properties',
+        {
+          android: {
+            usesCleartextTraffic: true,
+          },
+        },
+      ],
+    ],
     extra: {
       router: {},
       eas: {

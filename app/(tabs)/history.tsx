@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,15 +8,15 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Calendar, ListFilter as Filter, Search } from "lucide-react-native";
-import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { useAuth } from "@/context/AuthContext";
-import { useTheme } from "@/context/ThemeContext";
-import { supabase } from "@/lib/supabase";
-import { typography, spacing } from "@/constants/theme";
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Calendar, ListFilter as Filter } from 'lucide-react-native';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
+import { supabase } from '@/lib/supabase';
+import { typography, spacing } from '@/constants/theme';
 
 interface Analysis {
   id: string;
@@ -30,13 +29,122 @@ interface Analysis {
   created_at: string;
 }
 
+const HistoryCard = ({
+  analysis,
+  colors,
+  formatDate,
+  getResultColor,
+}: {
+  analysis: Analysis;
+  colors: any;
+  formatDate: (d: string) => string;
+  getResultColor: (r: string | null) => string;
+}) => {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchSignedUrl = async () => {
+      if (!analysis.image_url) return;
+
+      // If it looks like a URL (legacy), use it directly
+      if (analysis.image_url.startsWith('http')) {
+        setImageUrl(analysis.image_url);
+        return;
+      }
+
+      // Otherwise assume it's a storage path and sign it
+      try {
+        const { data } = await supabase.storage
+          .from('colony-images')
+          .createSignedUrl(analysis.image_url, 60 * 60); // 1 hour validity
+
+        if (data?.signedUrl) {
+          setImageUrl(data.signedUrl);
+        }
+      } catch (e) {
+        console.error('Error signing URL:', e);
+      }
+    };
+
+    fetchSignedUrl();
+  }, [analysis.image_url]);
+
+  return (
+    <TouchableOpacity activeOpacity={0.7}>
+      <Card style={styles.analysisCard}>
+        <View style={styles.analysisHeader}>
+          <View style={styles.analysisInfo}>
+            <Text style={[styles.analysisDate, { color: colors.text }]}>
+              {formatDate(analysis.created_at)}
+            </Text>
+            <Text
+              style={[styles.analysisMedium, { color: colors.textSecondary }]}
+            >
+              {analysis.culture_medium}
+            </Text>
+            <Text
+              style={[styles.analysisMedium, { color: colors.textSecondary }]}
+            >
+              Colony Age: {analysis.colony_age}
+            </Text>
+          </View>
+          {imageUrl && (
+            <Image
+              source={{ uri: imageUrl }}
+              style={[styles.analysisImage, { borderColor: colors.border }]}
+            />
+          )}
+        </View>
+
+        {analysis.characteristics && analysis.characteristics.length > 0 && (
+          <View style={styles.characteristicsList}>
+            {analysis.characteristics.map((characteristic, index) => (
+              <Text
+                key={index}
+                style={[
+                  styles.characteristicItem,
+                  { color: colors.textSecondary },
+                ]}
+              >
+                • {characteristic}
+              </Text>
+            ))}
+          </View>
+        )}
+
+        {analysis.result && (
+          <View
+            style={[styles.resultContainer, { borderTopColor: colors.border }]}
+          >
+            <Text
+              style={[
+                styles.resultText,
+                { color: getResultColor(analysis.result) },
+              ]}
+            >
+              {analysis.result}
+            </Text>
+            {analysis.confidence && (
+              <Text
+                style={[styles.confidenceText, { color: colors.textSecondary }]}
+              >
+                {Math.round(analysis.confidence * 100)}% confidence
+              </Text>
+            )}
+          </View>
+        )}
+      </Card>
+    </TouchableOpacity>
+  );
+};
+
 export default function HistoryScreen() {
   const { user } = useAuth();
   const { colors } = useTheme();
   const [analyses, setAnalyses] = useState<Analysis[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [filter, setFilter] = useState<"all" | "positive" | "negative">("all");
+  const [filter, setFilter] = useState<'all' | 'positive' | 'negative'>('all');
 
   useEffect(() => {
     if (user) {
@@ -47,17 +155,17 @@ export default function HistoryScreen() {
   const isPositive = (result: string | null): boolean => {
     if (!result) return false;
     const lower = result.toLowerCase();
-    return lower.startsWith("probably") || lower.startsWith("possibly");
+    return lower.startsWith('probably') || lower.startsWith('possibly');
   };
 
   const loadAnalyses = async () => {
     try {
       // Fetch all for user, then filter client-side for consistent logic
       const query = supabase
-        .from("analyses")
-        .select("*")
-        .eq("user_id", user?.id)
-        .order("created_at", { ascending: false });
+        .from('analyses')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false });
 
       const { data, error } = await query;
 
@@ -65,15 +173,15 @@ export default function HistoryScreen() {
 
       let filteredData = data || [];
 
-      if (filter === "positive") {
+      if (filter === 'positive') {
         filteredData = filteredData.filter((a) => isPositive(a.result));
-      } else if (filter === "negative") {
+      } else if (filter === 'negative') {
         filteredData = filteredData.filter((a) => !isPositive(a.result));
       }
 
       setAnalyses(filteredData);
     } catch (error) {
-      console.error("Error loading analyses:", error);
+      console.error('Error loading analyses:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -87,12 +195,12 @@ export default function HistoryScreen() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
   };
 
@@ -107,45 +215,63 @@ export default function HistoryScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: colors.background }]}
+      >
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Loading analysis history...</Text>
+          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
+            Loading analysis history...
+          </Text>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Analysis History</Text>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
+      <View
+        style={[
+          styles.header,
+          { backgroundColor: colors.surface, borderBottomColor: colors.border },
+        ]}
+      >
+        <Text style={[styles.headerTitle, { color: colors.text }]}>
+          Analysis History
+        </Text>
         <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
-          {getFilteredCount()} {filter === "all" ? "total" : filter} analyses
+          {getFilteredCount()} {filter === 'all' ? 'total' : filter} analyses
         </Text>
       </View>
 
-      <View style={[styles.filterContainer, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+      <View
+        style={[
+          styles.filterContainer,
+          { backgroundColor: colors.surface, borderBottomColor: colors.border },
+        ]}
+      >
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View style={styles.filterButtons}>
             <Button
               title="All"
-              onPress={() => setFilter("all")}
-              variant={filter === "all" ? "primary" : "secondary"}
+              onPress={() => setFilter('all')}
+              variant={filter === 'all' ? 'primary' : 'secondary'}
               size="small"
               style={styles.filterButton}
             />
             <Button
               title="Positive"
-              onPress={() => setFilter("positive")}
-              variant={filter === "positive" ? "primary" : "secondary"}
+              onPress={() => setFilter('positive')}
+              variant={filter === 'positive' ? 'primary' : 'secondary'}
               size="small"
               style={styles.filterButton}
             />
             <Button
               title="Negative"
-              onPress={() => setFilter("negative")}
-              variant={filter === "negative" ? "primary" : "secondary"}
+              onPress={() => setFilter('negative')}
+              variant={filter === 'negative' ? 'primary' : 'secondary'}
               size="small"
               style={styles.filterButton}
             />
@@ -170,66 +296,24 @@ export default function HistoryScreen() {
               color={colors.disabled}
               style={styles.emptyIcon}
             />
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>No Analyses Found</Text>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>
+              No Analyses Found
+            </Text>
             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-              {filter === "all"
-                ? "Start your first bacterial analysis to see results here."
+              {filter === 'all'
+                ? 'Start your first bacterial analysis to see results here.'
                 : `No ${filter} results found. Try changing your filter.`}
             </Text>
           </Card>
         ) : (
           analyses.map((analysis) => (
-            <TouchableOpacity key={analysis.id} activeOpacity={0.7}>
-              <Card style={styles.analysisCard}>
-                <View style={styles.analysisHeader}>
-                  <View style={styles.analysisInfo}>
-                    <Text style={[styles.analysisDate, { color: colors.text }]}>
-                      {formatDate(analysis.created_at)}
-                    </Text>
-                    <Text style={[styles.analysisMedium, { color: colors.textSecondary }]}>
-                      {analysis.culture_medium}
-                    </Text>
-                    <Text style={[styles.analysisMedium, { color: colors.textSecondary }]}>
-                      Colony Age: {analysis.colony_age}
-                    </Text>
-                  </View>
-                  {analysis.image_url && (
-                    <Image
-                      source={{ uri: analysis.image_url }}
-                      style={[styles.analysisImage, { borderColor: colors.border }]}
-                    />
-                  )}
-                </View>
-
-                {analysis.characteristics && analysis.characteristics.length > 0 && (
-                  <View style={styles.characteristicsList}>
-                    {analysis.characteristics.map((characteristic, index) => (
-                      <Text key={index} style={[styles.characteristicItem, { color: colors.textSecondary }]}>
-                        • {characteristic}
-                      </Text>
-                    ))}
-                  </View>
-                )}
-
-                {analysis.result && (
-                  <View style={[styles.resultContainer, { borderTopColor: colors.border }]}>
-                    <Text
-                      style={[
-                        styles.resultText,
-                        { color: getResultColor(analysis.result) },
-                      ]}
-                    >
-                      {analysis.result}
-                    </Text>
-                    {analysis.confidence && (
-                      <Text style={[styles.confidenceText, { color: colors.textSecondary }]}>
-                        {Math.round(analysis.confidence * 100)}% confidence
-                      </Text>
-                    )}
-                  </View>
-                )}
-              </Card>
-            </TouchableOpacity>
+            <HistoryCard
+              key={analysis.id}
+              analysis={analysis}
+              colors={colors}
+              formatDate={formatDate}
+              getResultColor={getResultColor}
+            />
           ))
         )}
       </ScrollView>
@@ -258,7 +342,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   filterButtons: {
-    flexDirection: "row",
+    flexDirection: 'row',
     paddingHorizontal: spacing.lg,
     gap: spacing.sm,
   },
@@ -270,14 +354,14 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   loadingText: {
     ...typography.body,
   },
   emptyCard: {
-    alignItems: "center",
+    alignItems: 'center',
     paddingVertical: spacing.xxl,
   },
   emptyIcon: {
@@ -289,16 +373,16 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     ...typography.body,
-    textAlign: "center",
+    textAlign: 'center',
     lineHeight: 24,
   },
   analysisCard: {
     marginBottom: spacing.md,
   },
   analysisHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     marginBottom: spacing.sm,
   },
   analysisInfo: {
@@ -306,7 +390,7 @@ const styles = StyleSheet.create({
   },
   analysisDate: {
     ...typography.body,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   analysisMedium: {
     ...typography.caption,
@@ -328,15 +412,15 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   resultContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingTop: spacing.sm,
     borderTopWidth: 1,
   },
   resultText: {
     ...typography.body,
-    fontWeight: "600",
+    fontWeight: '600',
     flex: 1,
   },
   confidenceText: {
