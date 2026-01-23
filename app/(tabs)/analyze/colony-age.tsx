@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,39 +6,39 @@ import {
   ScrollView,
   Image,
   Platform,
-} from "react-native";
-import { router, useLocalSearchParams } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Clock, Image as ImageIcon } from "lucide-react-native";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { TopBar } from "@/components/ui/TopBar";
-import { useTheme } from "@/context/ThemeContext";
-import { typography, spacing } from "@/constants/theme";
+} from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Clock, Image as ImageIcon } from 'lucide-react-native';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { TopBar } from '@/components/ui/TopBar';
+import { useTheme } from '@/context/ThemeContext';
+import { typography, spacing } from '@/constants/theme';
 
 const COLONY_AGES = [
   {
-    value: "24h",
-    label: "24 hours",
-    description: "Young colonies, early growth",
+    value: '24h',
+    label: '24 hours',
+    description: 'Young colonies, early growth',
   },
   {
-    value: "48h",
-    label: "48 hours",
-    description: "Mature colonies, optimal for analysis",
+    value: '48h',
+    label: '48 hours',
+    description: 'Mature colonies, optimal for analysis',
   },
-  { value: "72h", label: "72 hours", description: "Well-developed colonies" },
+  { value: '72h', label: '72 hours', description: 'Well-developed colonies' },
   {
-    value: "96h",
-    label: "96 hours",
-    description: "Older colonies, may show aging effects",
+    value: '96h',
+    label: '96 hours',
+    description: 'Older colonies, may show aging effects',
   },
 ];
 
 export default function ColonyAgeScreen() {
   const { colors } = useTheme();
   const params = useLocalSearchParams();
-  const [selectedAge, setSelectedAge] = useState<string>("");
+  const [selectedAge, setSelectedAge] = useState<string>('');
   const [analyzing, setAnalyzing] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -48,6 +48,7 @@ export default function ColonyAgeScreen() {
     : [];
   const cultureMedium = params.cultureMedium as string;
   const imageUri = params.imageUri as string;
+  const imagePath = params.imagePath as string;
 
   useEffect(() => {
     setImageError(false);
@@ -68,23 +69,24 @@ export default function ColonyAgeScreen() {
     setAnalyzing(true);
     try {
       router.push({
-        pathname: "/(tabs)/analyze/results",
+        pathname: '/(tabs)/analyze/results',
         params: {
           characteristics: JSON.stringify(characteristics),
           cultureMedium,
           imageUri,
+          imagePath,
           colonyAge: selectedAge,
         },
       });
     } catch (error) {
-      console.error("Navigation error:", error);
+      console.error('Navigation error:', error);
     } finally {
       setAnalyzing(false);
     }
   };
 
   const handleImageError = (error: any) => {
-    console.log("Image failed to load:", imageUri, error);
+    console.log('Image failed to load:', imageUri, error);
     setImageError(true);
     setImageLoaded(false);
   };
@@ -96,10 +98,10 @@ export default function ColonyAgeScreen() {
 
   const getImageSource = () => {
     if (!imageUri) return null;
-    if (Platform.OS === "web" && imageUri.startsWith("blob:")) {
+    if (Platform.OS === 'web' && imageUri.startsWith('blob:')) {
       return { uri: imageUri };
     }
-    if (imageUri.startsWith("file://")) {
+    if (imageUri.startsWith('file://')) {
       return { uri: imageUri };
     }
     return { uri: imageUri };
@@ -108,25 +110,38 @@ export default function ColonyAgeScreen() {
   const imageSource = getImageSource();
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
       <TopBar title="Colony Age" subtitle="Step 4 of 4" onBack={handleBack} />
 
       <ScrollView contentContainerStyle={styles.content}>
         <Card style={styles.instructionCard}>
           <View style={styles.instructionHeader}>
-            <View style={[styles.iconContainer, { backgroundColor: colors.primary + "15" }]}>
+            <View
+              style={[
+                styles.iconContainer,
+                { backgroundColor: colors.primary + '15' },
+              ]}
+            >
               <Clock size={32} color={colors.primary} />
             </View>
-            <Text style={[styles.instructionTitle, { color: colors.text }]}>Select Colony Age</Text>
+            <Text style={[styles.instructionTitle, { color: colors.text }]}>
+              Select Colony Age
+            </Text>
           </View>
-          <Text style={[styles.instructionText, { color: colors.textSecondary }]}>
+          <Text
+            style={[styles.instructionText, { color: colors.textSecondary }]}
+          >
             Please specify the age of the bacterial colonies in your sample.
             This information helps improve analysis accuracy.
           </Text>
         </Card>
 
         <Card style={styles.imageCard}>
-          <Text style={[styles.imageTitle, { color: colors.text }]}>Captured Sample</Text>
+          <Text style={[styles.imageTitle, { color: colors.text }]}>
+            Captured Sample
+          </Text>
 
           {imageSource && !imageError ? (
             <View style={styles.imageContainer}>
@@ -143,31 +158,58 @@ export default function ColonyAgeScreen() {
                 resizeMode="cover"
               />
               {!imageLoaded && !imageError && (
-                <View style={[styles.loadingOverlay, { backgroundColor: colors.background, opacity: 0.8 }]}>
-                  <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Loading image...</Text>
+                <View
+                  style={[
+                    styles.loadingOverlay,
+                    { backgroundColor: colors.background, opacity: 0.8 },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.loadingText,
+                      { color: colors.textSecondary },
+                    ]}
+                  >
+                    Loading image...
+                  </Text>
                 </View>
               )}
             </View>
           ) : (
-            <View style={[styles.imagePlaceholder, { borderColor: colors.border, backgroundColor: colors.background }]}>
+            <View
+              style={[
+                styles.imagePlaceholder,
+                {
+                  borderColor: colors.border,
+                  backgroundColor: colors.background,
+                },
+              ]}
+            >
               <ImageIcon size={48} color={colors.disabled} />
-              <Text style={[styles.imagePlaceholderText, { color: colors.disabled }]}>
+              <Text
+                style={[
+                  styles.imagePlaceholderText,
+                  { color: colors.disabled },
+                ]}
+              >
                 {imageError
-                  ? "Failed to load captured image"
-                  : "No image available"}
+                  ? 'Failed to load captured image'
+                  : 'No image available'}
               </Text>
               {imageError && imageUri && (
                 <View style={styles.errorDetails}>
                   <Text style={[styles.imageUriText, { color: colors.error }]}>
-                    URI:{" "}
+                    URI:{' '}
                     {imageUri.length > 60
                       ? `${imageUri.substring(0, 60)}...`
                       : imageUri}
                   </Text>
-                  <Text style={[styles.errorHint, { color: colors.textSecondary }]}>
-                    {Platform.OS === "web"
-                      ? "Web platform image loading issue"
-                      : "Image file may be corrupted"}
+                  <Text
+                    style={[styles.errorHint, { color: colors.textSecondary }]}
+                  >
+                    {Platform.OS === 'web'
+                      ? 'Web platform image loading issue'
+                      : 'Image file may be corrupted'}
                   </Text>
                 </View>
               )}
@@ -176,7 +218,9 @@ export default function ColonyAgeScreen() {
         </Card>
 
         <Card style={styles.ageSelectionCard}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Colony Age Options</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Colony Age Options
+          </Text>
 
           <View style={styles.ageOptions}>
             {COLONY_AGES.map((age) => (
@@ -184,10 +228,12 @@ export default function ColonyAgeScreen() {
                 <Button
                   title=""
                   onPress={() => handleAgeSelection(age.value)}
-                  variant={selectedAge === age.value ? "primary" : "outline"}
+                  variant={selectedAge === age.value ? 'primary' : 'outline'}
                   style={{
                     ...styles.ageOptionButton,
-                    ...(selectedAge === age.value && { backgroundColor: colors.primary + "20" }),
+                    ...(selectedAge === age.value && {
+                      backgroundColor: colors.primary + '20',
+                    }),
                   }}
                 />
                 <View
@@ -195,11 +241,11 @@ export default function ColonyAgeScreen() {
                     styles.ageOptionContent,
                     {
                       borderColor: colors.border,
-                      backgroundColor: colors.surface
+                      backgroundColor: colors.surface,
                     },
                     selectedAge === age.value && {
                       borderColor: colors.primary,
-                      backgroundColor: colors.primary + "08",
+                      backgroundColor: colors.primary + '08',
                     },
                   ]}
                 >
@@ -208,11 +254,18 @@ export default function ColonyAgeScreen() {
                       style={[
                         styles.radioButton,
                         { borderColor: colors.border },
-                        selectedAge === age.value && { borderColor: colors.primary },
+                        selectedAge === age.value && {
+                          borderColor: colors.primary,
+                        },
                       ]}
                     >
                       {selectedAge === age.value && (
-                        <View style={[styles.radioButtonInner, { backgroundColor: colors.primary }]} />
+                        <View
+                          style={[
+                            styles.radioButtonInner,
+                            { backgroundColor: colors.primary },
+                          ]}
+                        />
                       )}
                     </View>
                     <Text
@@ -240,25 +293,55 @@ export default function ColonyAgeScreen() {
           </View>
 
           {selectedAge && (
-            <View style={[styles.selectedInfo, { backgroundColor: colors.primary + "10", borderColor: colors.primary + "30" }]}>
+            <View
+              style={[
+                styles.selectedInfo,
+                {
+                  backgroundColor: colors.primary + '10',
+                  borderColor: colors.primary + '30',
+                },
+              ]}
+            >
               <Text style={[styles.selectedText, { color: colors.primary }]}>
-                Selected:{" "}
+                Selected:{' '}
                 {COLONY_AGES.find((age) => age.value === selectedAge)?.label}
               </Text>
             </View>
           )}
         </Card>
 
-        <Card style={[styles.summaryCard, { backgroundColor: colors.primary + "08", borderColor: colors.primary + "20" }]}>
-          <Text style={[styles.summaryTitle, { color: colors.text }]}>Analysis Summary</Text>
+        <Card
+          style={[
+            styles.summaryCard,
+            {
+              backgroundColor: colors.primary + '08',
+              borderColor: colors.primary + '20',
+            },
+          ]}
+        >
+          <Text style={[styles.summaryTitle, { color: colors.text }]}>
+            Analysis Summary
+          </Text>
 
           <View style={styles.summarySection}>
-            <Text style={[styles.summaryLabel, { color: colors.text }]}>Characteristics:</Text>
+            <Text style={[styles.summaryLabel, { color: colors.text }]}>
+              Characteristics:
+            </Text>
             <View style={styles.characteristicsList}>
               {characteristics.map((characteristic: string, index: number) => (
                 <View key={index} style={styles.characteristicItem}>
-                  <View style={[styles.checkmark, { backgroundColor: colors.primary }]} />
-                  <Text style={[styles.characteristicText, { color: colors.textSecondary }]}>
+                  <View
+                    style={[
+                      styles.checkmark,
+                      { backgroundColor: colors.primary },
+                    ]}
+                  />
+                  <Text
+                    style={[
+                      styles.characteristicText,
+                      { color: colors.textSecondary },
+                    ]}
+                  >
                     {characteristic}
                   </Text>
                 </View>
@@ -267,14 +350,24 @@ export default function ColonyAgeScreen() {
           </View>
 
           <View style={styles.summarySection}>
-            <Text style={[styles.summaryLabel, { color: colors.text }]}>Culture Medium:</Text>
-            <Text style={[styles.summaryValue, { color: colors.textSecondary }]}>{cultureMedium}</Text>
+            <Text style={[styles.summaryLabel, { color: colors.text }]}>
+              Culture Medium:
+            </Text>
+            <Text
+              style={[styles.summaryValue, { color: colors.textSecondary }]}
+            >
+              {cultureMedium}
+            </Text>
           </View>
 
           {selectedAge && (
             <View style={styles.summarySection}>
-              <Text style={[styles.summaryLabel, { color: colors.text }]}>Colony Age:</Text>
-              <Text style={[styles.summaryValue, { color: colors.textSecondary }]}>
+              <Text style={[styles.summaryLabel, { color: colors.text }]}>
+                Colony Age:
+              </Text>
+              <Text
+                style={[styles.summaryValue, { color: colors.textSecondary }]}
+              >
                 {COLONY_AGES.find((age) => age.value === selectedAge)?.label}
               </Text>
             </View>
@@ -302,39 +395,39 @@ const styles = StyleSheet.create({
   },
   instructionCard: {
     marginBottom: spacing.lg,
-    alignItems: "center",
+    alignItems: 'center',
   },
   instructionHeader: {
-    alignItems: "center",
+    alignItems: 'center',
     marginBottom: spacing.md,
   },
   iconContainer: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: spacing.sm,
   },
   instructionTitle: {
     ...typography.heading2,
-    textAlign: "center",
+    textAlign: 'center',
   },
   instructionText: {
     ...typography.body,
-    textAlign: "center",
+    textAlign: 'center',
     lineHeight: 24,
   },
   imageCard: {
     marginBottom: spacing.lg,
-    alignItems: "center",
+    alignItems: 'center',
   },
   imageTitle: {
     ...typography.heading3,
     marginBottom: spacing.md,
   },
   imageContainer: {
-    position: "relative",
+    position: 'relative',
     width: 200,
     height: 200,
   },
@@ -348,52 +441,52 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   loadingOverlay: {
-    position: "absolute",
+    position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: spacing.md,
   },
   loadingText: {
     ...typography.caption,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   imagePlaceholder: {
     width: 200,
     height: 200,
     borderRadius: spacing.md,
     borderWidth: 2,
-    borderStyle: "dashed",
-    alignItems: "center",
-    justifyContent: "center",
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
     padding: spacing.md,
   },
   imagePlaceholderText: {
     ...typography.caption,
     marginTop: spacing.sm,
-    textAlign: "center",
-    fontWeight: "600",
+    textAlign: 'center',
+    fontWeight: '600',
   },
   errorDetails: {
     marginTop: spacing.sm,
-    alignItems: "center",
+    alignItems: 'center',
   },
   imageUriText: {
     ...typography.caption,
     marginTop: spacing.xs,
     fontSize: 10,
-    textAlign: "center",
-    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
+    textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
   errorHint: {
     ...typography.caption,
     marginTop: spacing.xs,
     fontSize: 10,
-    textAlign: "center",
-    fontStyle: "italic",
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
   ageSelectionCard: {
     marginBottom: spacing.lg,
@@ -406,10 +499,10 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   ageOptionContainer: {
-    position: "relative",
+    position: 'relative',
   },
   ageOptionButton: {
-    position: "absolute",
+    position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
@@ -423,8 +516,8 @@ const styles = StyleSheet.create({
     borderRadius: spacing.sm,
   },
   ageOptionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: spacing.xs,
   },
   radioButton: {
@@ -433,8 +526,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 2,
     marginRight: spacing.sm,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   radioButtonInner: {
     width: 10,
@@ -443,7 +536,7 @@ const styles = StyleSheet.create({
   },
   ageOptionLabel: {
     ...typography.body,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   ageOptionDescription: {
     ...typography.caption,
@@ -457,8 +550,8 @@ const styles = StyleSheet.create({
   },
   selectedText: {
     ...typography.body,
-    fontWeight: "600",
-    textAlign: "center",
+    fontWeight: '600',
+    textAlign: 'center',
   },
   summaryCard: {
     marginBottom: spacing.lg,
@@ -473,7 +566,7 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     ...typography.body,
-    fontWeight: "600",
+    fontWeight: '600',
     marginBottom: spacing.xs,
   },
   characteristicsList: {
@@ -481,8 +574,8 @@ const styles = StyleSheet.create({
     marginLeft: spacing.sm,
   },
   characteristicItem: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   checkmark: {
     width: 6,
