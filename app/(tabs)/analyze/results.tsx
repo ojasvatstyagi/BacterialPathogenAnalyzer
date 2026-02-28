@@ -108,15 +108,6 @@ export default function ResultsScreen() {
     }
   };
 
-  const getStatusMeta = (score: number) => {
-    if (score >= 90)
-      return { label: 'Very High Confidence', color: colors.success };
-    if (score >= 70) return { label: 'High Confidence', color: colors.success };
-    if (score >= 50)
-      return { label: 'Moderate Confidence', color: colors.warning };
-    return { label: 'Low Confidence', color: colors.error };
-  };
-
   if (loading) {
     return (
       <SafeAreaView
@@ -162,7 +153,6 @@ export default function ResultsScreen() {
     );
   }
 
-  const statusMeta = getStatusMeta(prediction.confidence);
   const isBpseudo = prediction.is_bpseudo;
 
   return (
@@ -208,40 +198,6 @@ export default function ResultsScreen() {
             <Text style={[styles.resultTitle, { color: colors.text }]}>
               {prediction.result}
             </Text>
-
-            <View style={styles.confidenceContainer}>
-              <View style={styles.confidenceRow}>
-                <Text
-                  style={[styles.confidenceValue, { color: statusMeta.color }]}
-                >
-                  {prediction.confidence.toFixed(1)}%
-                </Text>
-                <Text
-                  style={[
-                    styles.confidenceLevel,
-                    { color: colors.textSecondary },
-                  ]}
-                >
-                  {statusMeta.label}
-                </Text>
-              </View>
-              <View
-                style={[
-                  styles.progressBarBg,
-                  { backgroundColor: colors.border },
-                ]}
-              >
-                <View
-                  style={[
-                    styles.progressBarFill,
-                    {
-                      width: `${prediction.confidence}%`,
-                      backgroundColor: statusMeta.color,
-                    },
-                  ]}
-                />
-              </View>
-            </View>
           </View>
 
           {/* Details Section */}
@@ -410,22 +366,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   resultTitle: { fontSize: 28, fontWeight: '800', marginBottom: 20 },
-  confidenceContainer: { width: '100%' },
-  confidenceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    marginBottom: 8,
-  },
-  confidenceValue: { fontSize: 24, fontWeight: '900' },
-  confidenceLevel: { fontSize: 13, fontWeight: '600' },
-  progressBarBg: {
-    height: 8,
-    borderRadius: 4,
-    width: '100%',
-    overflow: 'hidden',
-  },
-  progressBarFill: { height: '100%', borderRadius: 4 },
   detailsGrid: {
     flexDirection: 'row',
     paddingHorizontal: 16,
