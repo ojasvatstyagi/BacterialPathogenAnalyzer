@@ -1,6 +1,6 @@
 //app/(auth)/login.tsx
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,44 +9,46 @@ import {
   Platform,
   KeyboardAvoidingView,
   TextInput, // Added for useRef typing
-} from "react-native";
-import { Link, router } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { Card } from "@/components/ui/Card";
-import { useAuth } from "@/context/AuthContext";
-import { typography, spacing } from "@/constants/theme";
-import { useTheme } from "@/context/ThemeContext";
+} from 'react-native';
+import { Link, router } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Card } from '@/components/ui/Card';
+import { useAuth } from '@/context/AuthContext';
+import { typography, spacing } from '@/constants/theme';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function LoginScreen() {
   const { colors } = useTheme();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>(
-    {}
+    {},
   );
   const [formError, setFormError] = useState<string | null>(null);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   // Refs for keyboard focus management
   const passwordRef = useRef<TextInput>(null); // Ref for password input
 
-  const { signIn } = useAuth();
+  const { signIn, signInWithGoogle } = useAuth();
 
   const validateForm = () => {
     const newErrors: { email?: string; password?: string } = {};
 
     if (!email) {
-      newErrors.email = "Email is required";
+      newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = "Email is invalid";
+      newErrors.email = 'Email is invalid';
     }
 
     if (!password) {
-      newErrors.password = "Password is required";
+      newErrors.password = 'Password is required';
     } else if (password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
+      newErrors.password = 'Password must be at least 6 characters';
     }
 
     setErrors(newErrors);
@@ -66,25 +68,46 @@ export default function LoginScreen() {
       if (error) {
         setFormError(error.message);
       } else {
-        router.replace("/(tabs)");
+        router.replace('/(tabs)');
       }
     } catch (error) {
-      setFormError("An unexpected error occurred. Please try again.");
+      setFormError('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    setFormError(null);
+    setGoogleLoading(true);
+    try {
+      const { error } = await signInWithGoogle();
+      if (error) {
+        setFormError(error.message);
+      } else {
+        router.replace('/(tabs)');
+      }
+    } catch (error) {
+      setFormError('An unexpected error occurred. Please try again.');
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         // Using "height" for smoother Android behavior
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <View style={styles.content}>
           <View style={styles.header}>
-            <Text style={[styles.title, { color: colors.text }]}>Bacterial Pathogen Analyzer</Text>
+            <Text style={[styles.title, { color: colors.text }]}>
+              Bacterial Pathogen Analyzer
+            </Text>
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
               Professional diagnostic tool for Burkholderia pseudomallei
               identification
@@ -96,7 +119,9 @@ export default function LoginScreen() {
             keyboardShouldPersistTaps="handled" // Ensures keyboard doesn't dismiss easily
           >
             <Card>
-              <Text style={[styles.cardTitle, { color: colors.text }]}>Sign In</Text>
+              <Text style={[styles.cardTitle, { color: colors.text }]}>
+                Sign In
+              </Text>
               <Input
                 label="Email Address"
                 value={email}
@@ -130,12 +155,50 @@ export default function LoginScreen() {
                 loading={loading}
                 style={styles.signInButton}
               />
+              <View style={styles.dividerContainer}>
+                <View
+                  style={[
+                    styles.dividerLine,
+                    { backgroundColor: colors.border },
+                  ]}
+                />
+                <Text
+                  style={[styles.dividerText, { color: colors.textSecondary }]}
+                >
+                  OR
+                </Text>
+                <View
+                  style={[
+                    styles.dividerLine,
+                    { backgroundColor: colors.border },
+                  ]}
+                />
+              </View>
+              <Button
+                title="Continue with Google"
+                onPress={handleGoogleSignIn}
+                loading={googleLoading}
+                variant="outline"
+                icon={
+                  <Ionicons name="logo-google" size={20} color={colors.text} />
+                }
+                style={styles.googleButton}
+              />
               {/* Smoother Error Handling: Display form error here */}
-              {formError && <Text style={[styles.errorText, { color: colors.error }]}>{formError}</Text>}
+              {formError && (
+                <Text style={[styles.errorText, { color: colors.error }]}>
+                  {formError}
+                </Text>
+              )}
               <View style={styles.footer}>
-                <Text style={[styles.footerText, { color: colors.textSecondary }]}>
-                  Don't have an account?{" "}
-                  <Link href="/(auth)/register" style={[styles.link, { color: colors.primary }]}>
+                <Text
+                  style={[styles.footerText, { color: colors.textSecondary }]}
+                >
+                  Don't have an account?{' '}
+                  <Link
+                    href="/(auth)/register"
+                    style={[styles.link, { color: colors.primary }]}
+                  >
                     Sign up
                   </Link>
                 </Text>
@@ -154,21 +217,21 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    justifyContent: "center",
+    justifyContent: 'center',
     padding: spacing.lg,
   },
   header: {
-    alignItems: "center",
+    alignItems: 'center',
     marginBottom: spacing.xxl,
   },
   title: {
     ...typography.heading1,
-    textAlign: "center",
+    textAlign: 'center',
     marginBottom: spacing.sm,
   },
   subtitle: {
     ...typography.body,
-    textAlign: "center",
+    textAlign: 'center',
     maxWidth: 300,
   },
   formScrollContainer: {
@@ -176,30 +239,46 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   formContent: {
-    justifyContent: "center",
+    justifyContent: 'center',
   },
   cardTitle: {
     ...typography.heading2,
-    textAlign: "center",
+    textAlign: 'center',
     marginBottom: spacing.lg,
   },
   signInButton: {
     marginTop: spacing.md,
   },
   footer: {
-    alignItems: "center",
+    alignItems: 'center',
     marginTop: spacing.lg,
   },
   footerText: {
     ...typography.body,
   },
   link: {
-    fontWeight: "600",
+    fontWeight: '600',
   },
   errorText: {
     ...typography.body,
-    textAlign: "center",
+    textAlign: 'center',
     marginTop: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: spacing.lg,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+  },
+  dividerText: {
+    ...typography.caption,
+    marginHorizontal: spacing.md,
+  },
+  googleButton: {
     marginBottom: spacing.sm,
   },
 });

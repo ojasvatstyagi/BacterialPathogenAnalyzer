@@ -1,6 +1,6 @@
 //app/(auth)/register.tsx
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,23 +10,24 @@ import {
   Platform,
   KeyboardAvoidingView,
   TextInput,
-} from "react-native";
-import { Link, router } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { Card } from "@/components/ui/Card";
-import { useAuth } from "@/context/AuthContext";
-import { typography, spacing } from "@/constants/theme";
-import { useTheme } from "@/context/ThemeContext";
+} from 'react-native';
+import { Link, router } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Card } from '@/components/ui/Card';
+import { useAuth } from '@/context/AuthContext';
+import { typography, spacing } from '@/constants/theme';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function RegisterScreen() {
   const { colors } = useTheme();
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null); // New state for on-screen errors
   const [errors, setErrors] = useState<{
@@ -36,7 +37,8 @@ export default function RegisterScreen() {
     password?: string;
     confirmPassword?: string;
   }>({});
-  const { signUp } = useAuth();
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const { signUp, signInWithGoogle } = useAuth();
 
   // Refs for keyboard focus management
   const lastNameRef = useRef<TextInput>(null);
@@ -54,33 +56,33 @@ export default function RegisterScreen() {
     } = {};
 
     if (!firstName.trim()) {
-      newErrors.firstName = "First name is required";
+      newErrors.firstName = 'First name is required';
     } else if (firstName.trim().length < 2) {
-      newErrors.firstName = "First name must be at least 2 characters";
+      newErrors.firstName = 'First name must be at least 2 characters';
     }
 
     if (!lastName.trim()) {
-      newErrors.lastName = "Last name is required";
+      newErrors.lastName = 'Last name is required';
     } else if (lastName.trim().length < 2) {
-      newErrors.lastName = "Last name must be at least 2 characters";
+      newErrors.lastName = 'Last name must be at least 2 characters';
     }
 
     if (!email) {
-      newErrors.email = "Email is required";
+      newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = "Email is invalid";
+      newErrors.email = 'Email is invalid';
     }
 
     if (!password) {
-      newErrors.password = "Password is required";
+      newErrors.password = 'Password is required';
     } else if (password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
+      newErrors.password = 'Password must be at least 6 characters';
     }
 
     if (!confirmPassword) {
-      newErrors.confirmPassword = "Please confirm your password";
+      newErrors.confirmPassword = 'Please confirm your password';
     } else if (password !== confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match";
+      newErrors.confirmPassword = 'Passwords do not match';
     }
 
     setErrors(newErrors);
@@ -106,42 +108,63 @@ export default function RegisterScreen() {
 
       if (error) {
         // Display error on screen instead of Alert
-        console.error("Signup error:", error);
-        setFormError(error.message || "Registration failed. Please try again.");
+        console.error('Signup error:', error);
+        setFormError(error.message || 'Registration failed. Please try again.');
       } else {
         // Alert for success (as this action is complete and requires user action - email check)
         Alert.alert(
-          "Account Created",
-          "Registration successful! Please check your email and click the verification link to activate your account. You may need to check your spam folder.",
+          'Account Created',
+          'Registration successful! Please check your email and click the verification link to activate your account. You may need to check your spam folder.',
           [
             {
-              text: "OK",
-              onPress: () => router.replace("/(auth)/login"),
+              text: 'OK',
+              onPress: () => router.replace('/(auth)/login'),
             },
-          ]
+          ],
         );
       }
     } catch (err: any) {
       // Catch unexpected network/system errors
-      console.error("Registration error:", err);
+      console.error('Registration error:', err);
       setFormError(
         err.message ||
-        "Registration failed. Please check your connection and try again."
+          'Registration failed. Please check your connection and try again.',
       );
     } finally {
       setLoading(false);
     }
   };
 
+  const handleGoogleSignUp = async () => {
+    setFormError(null);
+    setGoogleLoading(true);
+    try {
+      const { error } = await signInWithGoogle();
+      if (error) {
+        setFormError(error.message);
+      } else {
+        router.replace('/(tabs)');
+      }
+    } catch (error) {
+      setFormError('An unexpected error occurred. Please try again.');
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <View style={styles.content}>
           <View style={styles.header}>
-            <Text style={[styles.title, { color: colors.text }]}>Create Account</Text>
+            <Text style={[styles.title, { color: colors.text }]}>
+              Create Account
+            </Text>
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
               Join the professional network for bacterial pathogen analysis
             </Text>
@@ -150,9 +173,12 @@ export default function RegisterScreen() {
             style={styles.formScrollContainer}
             contentContainerStyle={styles.formContent}
             keyboardShouldPersistTaps="handled" // Improved keyboard handling
+            showsVerticalScrollIndicator={false}
           >
             <Card>
-              <Text style={[styles.cardTitle, { color: colors.text }]}>Sign Up</Text>
+              <Text style={[styles.cardTitle, { color: colors.text }]}>
+                Sign Up
+              </Text>
               <View style={styles.nameRow}>
                 <Input
                   label="First Name"
@@ -224,16 +250,54 @@ export default function RegisterScreen() {
                 returnKeyType="done"
                 onSubmitEditing={handleSignUp}
               />
-              {formError && <Text style={[styles.errorText, { color: colors.error }]}>{formError}</Text>}
+              {formError && (
+                <Text style={[styles.errorText, { color: colors.error }]}>
+                  {formError}
+                </Text>
+              )}
               <Button
-                title={loading ? "Creating..." : "Sign Up"}
+                title={loading ? 'Creating...' : 'Sign Up'}
                 onPress={handleSignUp}
                 disabled={loading}
               />
+              <View style={styles.dividerContainer}>
+                <View
+                  style={[
+                    styles.dividerLine,
+                    { backgroundColor: colors.border },
+                  ]}
+                />
+                <Text
+                  style={[styles.dividerText, { color: colors.textSecondary }]}
+                >
+                  OR
+                </Text>
+                <View
+                  style={[
+                    styles.dividerLine,
+                    { backgroundColor: colors.border },
+                  ]}
+                />
+              </View>
+              <Button
+                title="Continue with Google"
+                onPress={handleGoogleSignUp}
+                loading={googleLoading}
+                variant="outline"
+                icon={
+                  <Ionicons name="logo-google" size={20} color={colors.text} />
+                }
+                style={styles.googleButton}
+              />
               <View style={styles.footer}>
-                <Text style={[styles.footerText, { color: colors.textSecondary }]}>
-                  Already have an account?{" "}
-                  <Link href="/(auth)/login" style={[styles.link, { color: colors.primary }]}>
+                <Text
+                  style={[styles.footerText, { color: colors.textSecondary }]}
+                >
+                  Already have an account?{' '}
+                  <Link
+                    href="/(auth)/login"
+                    style={[styles.link, { color: colors.primary }]}
+                  >
                     Sign in
                   </Link>
                 </Text>
@@ -252,21 +316,21 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    justifyContent: "center",
+    justifyContent: 'center',
     padding: spacing.lg,
   },
   header: {
-    alignItems: "center",
+    alignItems: 'center',
     marginBottom: spacing.xxl,
   },
   title: {
     ...typography.heading1,
-    textAlign: "center",
+    textAlign: 'center',
     marginBottom: spacing.sm,
   },
   subtitle: {
     ...typography.body,
-    textAlign: "center",
+    textAlign: 'center',
     maxWidth: 300,
   },
   formScrollContainer: {
@@ -274,15 +338,15 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   formContent: {
-    justifyContent: "center",
+    justifyContent: 'center',
   },
   cardTitle: {
     ...typography.heading2,
-    textAlign: "center",
+    textAlign: 'center',
     marginBottom: spacing.lg,
   },
   nameRow: {
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: spacing.sm,
   },
   nameInput: {
@@ -290,18 +354,34 @@ const styles = StyleSheet.create({
   },
   errorText: {
     ...typography.body,
-    textAlign: "center",
+    textAlign: 'center',
     marginTop: spacing.md,
     marginBottom: spacing.sm,
   },
   footer: {
-    alignItems: "center",
+    alignItems: 'center',
     marginTop: spacing.lg,
   },
   footerText: {
     ...typography.body,
   },
   link: {
-    fontWeight: "600",
+    fontWeight: '600',
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: spacing.lg,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+  },
+  dividerText: {
+    ...typography.caption,
+    marginHorizontal: spacing.md,
+  },
+  googleButton: {
+    marginBottom: spacing.sm,
   },
 });
