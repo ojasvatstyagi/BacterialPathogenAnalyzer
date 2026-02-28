@@ -38,3 +38,4 @@ yarn-error.*
 *.tsbuildinfo
 
 server/backend/venv
+lab_deployment_proposal.md

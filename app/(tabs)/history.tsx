@@ -124,13 +124,6 @@ const HistoryCard = ({
             >
               {analysis.result}
             </Text>
-            {analysis.confidence && (
-              <Text
-                style={[styles.confidenceText, { color: colors.textSecondary }]}
-              >
-                {Math.round(analysis.confidence * 100)}% confidence
-              </Text>
-            )}
           </View>
         )}
       </Card>
@@ -422,8 +415,5 @@ const styles = StyleSheet.create({
     ...typography.body,
     fontWeight: '600',
     flex: 1,
-  },
-  confidenceText: {
-    ...typography.caption,
   },
 });

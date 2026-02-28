@@ -1,18 +1,18 @@
-import React from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
-import { router } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { router } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Microscope,
   FlaskConical,
   Camera,
   Clock,
   ChartBar as BarChart3,
-} from "lucide-react-native";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { useTheme } from "@/context/ThemeContext";
-import { typography, spacing } from "@/constants/theme";
+} from 'lucide-react-native';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { useTheme } from '@/context/ThemeContext';
+import { typography, spacing } from '@/constants/theme';
 
 const AnalysisStep = ({
   icon: Icon,
@@ -40,12 +40,17 @@ const AnalysisStep = ({
         <View
           style={[
             styles.stepIconContainer,
-            { backgroundColor: colors.primary + "15" },
+            { backgroundColor: colors.primary + '15' },
           ]}
         >
           <Icon size={24} color={colors.primary} />
         </View>
-        <View style={[styles.stepNumber, { backgroundColor: colors.primary, borderColor: colors.surface }]}>
+        <View
+          style={[
+            styles.stepNumber,
+            { backgroundColor: colors.primary, borderColor: colors.surface },
+          ]}
+        >
           <Text style={[styles.stepNumberText, { color: colors.surface }]}>
             {stepNumber}
           </Text>
@@ -65,11 +70,13 @@ export default function AnalyzeScreen() {
   const { colors, shadows } = useTheme();
 
   const handleStartAnalysis = () => {
-    router.push("/analyze/characteristics");
+    router.push('/analyze/characteristics');
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
       <ScrollView contentContainerStyle={styles.content} bounces={true}>
         <View style={styles.header}>
           <Text style={[styles.title, { color: colors.text }]}>
@@ -85,15 +92,15 @@ export default function AnalyzeScreen() {
           style={[
             styles.heroCard,
             {
-              backgroundColor: colors.primary + "08",
-              borderColor: colors.primary + "20",
+              backgroundColor: colors.primary + '08',
+              borderColor: colors.primary + '20',
             },
           ]}
         >
           <View
             style={[
               styles.heroIcon,
-              { backgroundColor: colors.primary + "15" },
+              { backgroundColor: colors.primary + '15' },
             ]}
           >
             <Microscope size={48} color={colors.primary} />
@@ -101,9 +108,10 @@ export default function AnalyzeScreen() {
           <Text style={[styles.heroTitle, { color: colors.text }]}>
             Start New Analysis
           </Text>
-          <Text style={[styles.heroDescription, { color: colors.textSecondary }]}>
-            Follow our guided 5-step process to analyze bacterial samples with
-            confidence
+          <Text
+            style={[styles.heroDescription, { color: colors.textSecondary }]}
+          >
+            Follow our guided 5-step process to analyze bacterial samples
           </Text>
           <Button
             title="Begin Analysis"
@@ -116,7 +124,9 @@ export default function AnalyzeScreen() {
           <Text style={[styles.processTitle, { color: colors.text }]}>
             Analysis Process
           </Text>
-          <Text style={[styles.processDescription, { color: colors.textSecondary }]}>
+          <Text
+            style={[styles.processDescription, { color: colors.textSecondary }]}
+          >
             Our streamlined workflow ensures accurate and reliable results
           </Text>
 
@@ -156,7 +166,7 @@ export default function AnalyzeScreen() {
             <AnalysisStep
               icon={BarChart3}
               title="Get Results"
-              description="Receive AI-powered analysis with confidence scores"
+              description="Receive AI-powered analysis results"
               stepNumber={5}
               isLast={true}
             />
@@ -176,22 +186,22 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxl,
   },
   header: {
-    alignItems: "center",
+    alignItems: 'center',
     marginBottom: spacing.xl,
   },
   title: {
     ...typography.heading1,
-    textAlign: "center",
+    textAlign: 'center',
     marginBottom: spacing.sm,
   },
   subtitle: {
     ...typography.body,
-    textAlign: "center",
+    textAlign: 'center',
     lineHeight: 24,
     maxWidth: 320,
   },
   heroCard: {
-    alignItems: "center",
+    alignItems: 'center',
     marginBottom: spacing.lg,
     borderWidth: 1,
   },
@@ -199,18 +209,18 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: spacing.md,
   },
   heroTitle: {
     ...typography.heading2,
-    textAlign: "center",
+    textAlign: 'center',
     marginBottom: spacing.sm,
   },
   heroDescription: {
     ...typography.body,
-    textAlign: "center",
+    textAlign: 'center',
     marginBottom: spacing.lg,
     lineHeight: 24,
   },
@@ -222,30 +232,30 @@ const styles = StyleSheet.create({
   },
   processTitle: {
     ...typography.heading2,
-    textAlign: "center",
+    textAlign: 'center',
     marginBottom: spacing.sm,
   },
   processDescription: {
     ...typography.body,
-    textAlign: "center",
+    textAlign: 'center',
     marginBottom: spacing.xl,
   },
   stepsContainer: {},
   stepContainer: {
-    flexDirection: "row",
-    alignItems: "flex-start",
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     marginBottom: spacing.lg,
   },
   stepHeader: {
-    alignItems: "center",
+    alignItems: 'center',
     marginRight: spacing.md,
-    position: "relative",
+    position: 'relative',
     paddingBottom: 20,
     minHeight: 120,
   },
   // Vertical Line Style
   stepLine: {
-    position: "absolute",
+    position: 'absolute',
     top: 50,
     bottom: 0,
     width: 2,
@@ -256,25 +266,25 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     zIndex: 1,
   },
   stepNumber: {
-    position: "absolute",
+    position: 'absolute',
     top: -8,
     right: -8,
     width: 24,
     height: 24,
     borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     zIndex: 2,
     borderWidth: 2,
   },
   stepNumberText: {
     ...typography.caption,
-    fontWeight: "700",
+    fontWeight: '700',
     fontSize: 12,
   },
   stepContent: {
