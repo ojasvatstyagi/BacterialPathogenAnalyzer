@@ -137,3 +137,52 @@ To keep the server running 24/7 in the background:
   git pull
   sudo systemctl restart bacterial_app
   ```
+
+# AWS Smooth Shutdown Guide
+
+To ensure you do not get charged after your free tier expires, you need to deliberately **Terminate** (delete) your resources, not just stop them. `Stop` pauses the virtual machine, but AWS will still charge you for the hard drive storage (EBS) and any reserved Elastic IPs.
+
+Follow these steps exactly in your AWS Console to gracefully shut down and delete your services:
+
+## Step 1: Terminate the EC2 Instance
+
+This is the core server hosting your application.
+
+1. Log in to the **AWS Management Console**.
+2. Go to the **EC2 Dashboard**.
+3. In the left-hand menu, click on **Instances**.
+4. Select your running instance (e.g., the `t2.micro` or `t3.micro` Ubuntu server).
+5. Click the **Instance state** dropdown in the top right.
+6. Select **Terminate instance** (NOT Stop instance).
+7. Confirm termination.
+
+_(Note: "Terminating" an instance automatically deletes the primary hard drive (EBS volume) attached to it by default. The instance will show as "Shutting Down" and then "Terminated", and will disappear shortly.)_
+
+## Step 2: Release Elastic IPs (Crucial!)
+
+AWS charges you for Elastic IPs (Static IP addresses) if they are resting in your account but _not_ actively attached to a running instance.
+
+1. In the EC2 Dashboard left-hand menu, scroll down to **Network & Security**.
+2. Click on **Elastic IPs**.
+3. If you see any IPs listed here, select them.
+4. Click the **Actions** dropdown and select **Release Elastic IP addresses**.
+5. Confirm. If the list is empty, you are safe.
+
+## Step 3: Verify EBS Volumes are Deleted
+
+Sometimes, secondary hard drives are left behind.
+
+1. In the EC2 Dashboard left-hand menu, under **Elastic Block Store**, click **Volumes**.
+2. Check if there are any "Available" or "In-Use" volumes.
+3. If you see any, select them, click **Actions**, and select **Delete volume**.
+4. If the list is empty, you are safe.
+
+## Step 4: Delete Key Pairs (Optional but good practice)
+
+1. On the left menu, go to **Network & Security** -> **Key Pairs**.
+2. Select your `server-key.pem` key.
+3. Click **Actions** -> **Delete**.
+
+## Summary
+
+Once the Instance is **Terminated**, the Elastic IPs are **Released**, and the EBS Volumes are **Deleted**, AWS will stop charging you for EC2 services immediately. No further action is required.
