@@ -198,6 +198,10 @@ eas build --platform android --profile production
 
 4. **Supabase Configuration**
 
+### Local Supabase Deployment (On-Premise)
+
+For deploying a self-hosted Supabase instance via Docker (e.g., AIMS Kochi local server), please refer to the detailed [Local Supabase Setup Guide](docs/LOCAL_SUPABASE_SETUP.md). This eliminates dependency on cloud limits.
+
 ### Database Setup
 
 The application includes pre-built migrations. Run these in your Supabase SQL editor:
