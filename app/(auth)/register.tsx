@@ -13,7 +13,6 @@ import {
 } from 'react-native';
 import { Link, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
@@ -37,8 +36,7 @@ export default function RegisterScreen() {
     password?: string;
     confirmPassword?: string;
   }>({});
-  const [googleLoading, setGoogleLoading] = useState(false);
-  const { signUp, signInWithGoogle } = useAuth();
+  const { signUp } = useAuth();
 
   // Refs for keyboard focus management
   const lastNameRef = useRef<TextInput>(null);
@@ -111,14 +109,14 @@ export default function RegisterScreen() {
         console.error('Signup error:', error);
         setFormError(error.message || 'Registration failed. Please try again.');
       } else {
-        // Alert for success (as this action is complete and requires user action - email check)
+        // Auto-confirmed login logic
         Alert.alert(
           'Account Created',
-          'Registration successful! Please check your email and click the verification link to activate your account. You may need to check your spam folder.',
+          'Registration successful! You can now log in to the app.',
           [
             {
               text: 'OK',
-              onPress: () => router.replace('/(auth)/login'),
+              onPress: () => router.replace('/(tabs)'),
             },
           ],
         );
@@ -128,27 +126,10 @@ export default function RegisterScreen() {
       console.error('Registration error:', err);
       setFormError(
         err.message ||
-          'Registration failed. Please check your connection and try again.',
+        'Registration failed. Please check your connection and try again.',
       );
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleGoogleSignUp = async () => {
-    setFormError(null);
-    setGoogleLoading(true);
-    try {
-      const { error } = await signInWithGoogle();
-      if (error) {
-        setFormError(error.message);
-      } else {
-        router.replace('/(tabs)');
-      }
-    } catch (error) {
-      setFormError('An unexpected error occurred. Please try again.');
-    } finally {
-      setGoogleLoading(false);
     }
   };
 
@@ -260,35 +241,6 @@ export default function RegisterScreen() {
                 onPress={handleSignUp}
                 disabled={loading}
               />
-              <View style={styles.dividerContainer}>
-                <View
-                  style={[
-                    styles.dividerLine,
-                    { backgroundColor: colors.border },
-                  ]}
-                />
-                <Text
-                  style={[styles.dividerText, { color: colors.textSecondary }]}
-                >
-                  OR
-                </Text>
-                <View
-                  style={[
-                    styles.dividerLine,
-                    { backgroundColor: colors.border },
-                  ]}
-                />
-              </View>
-              <Button
-                title="Continue with Google"
-                onPress={handleGoogleSignUp}
-                loading={googleLoading}
-                variant="outline"
-                icon={
-                  <Ionicons name="logo-google" size={20} color={colors.text} />
-                }
-                style={styles.googleButton}
-              />
               <View style={styles.footer}>
                 <Text
                   style={[styles.footerText, { color: colors.textSecondary }]}
@@ -367,21 +319,5 @@ const styles = StyleSheet.create({
   },
   link: {
     fontWeight: '600',
-  },
-  dividerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: spacing.lg,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-  },
-  dividerText: {
-    ...typography.caption,
-    marginHorizontal: spacing.md,
-  },
-  googleButton: {
-    marginBottom: spacing.sm,
   },
 });
