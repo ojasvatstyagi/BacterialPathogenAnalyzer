@@ -1,107 +1,153 @@
-# Local Server Deployment Guide (AIMS Kochi)
+# Local ML Model Server Deployment Guide — AIMS Kochi
 
-This document outlines the complete process to deploy the Bacterial Pathogen Analyzer ML backend to your local campus server. 
+This guide covers deploying the Bacterial Pathogen Analyzer ML backend (Flask/Python) to the AIMS campus local server so the mobile app can perform colony image analysis on-premise.
 
-## 1. Prerequisites (For the IT Department)
+## 1. Prerequisites
 
 Before starting, ensure the local server meets these requirements:
-- **OS**: Linux (Ubuntu Server 22.04 LTS or similar Debian-based recommended).
-- **RAM**: Minimum 8GB (Running Supabase Docker alongside the ML Model requires sufficient memory).
-- **Network**: Port **5000** must be open on the local firewall to allow the mobile devices to reach the API.
-- **Tools**: Ensure `python3`, `pip`, `venv`, and `git` are installed.
 
-## 2. Server Configuration
+| Resource | Minimum | Recommended |
+|---|---|---|
+| RAM | 8 GB | 16 GB |
+| CPU | 4 Cores | 8 Cores |
+| Disk | 20 GB | 50 GB |
+| OS | Ubuntu 22.04 | Ubuntu 22.04 LTS |
 
-Connect to the server via SSH (e.g., `ssh admin@<LOCAL_SERVER_IP>`) and run the following setup commands:
-
-### A. System Updates & Tools
-
+**Required software** (install if not present):
 ```bash
-sudo apt update && sudo apt install -y python3-pip python3-venv git
+sudo apt update && sudo apt install -y python3 python3-pip python3-venv git
 ```
 
-### B. Application Setup
+**Network:** Port **5000** must be accessible on the local network so mobile devices can reach the API. Confirm this with your network administrator.
 
-Clone the repository to the server. (If the repo is private, use a Personal Access Token or generate an SSH key on the server).
+---
+
+## 2. Application Setup
+
+### Step 1 — Get the code onto the server
+
+If the server has internet access, clone the repository:
+```bash
+git clone https://github.com/ojasvatstyagi/BacterialPathogenAnalyzer.git
+```
+
+Otherwise, copy the project folder from a USB drive or internal file share.
+
+### Step 2 — Navigate to the backend directory
 
 ```bash
-# Clone Repository
-git clone https://github.com/ojasvatstyagi/BacterialPathogenAnalyzer.git
 cd BacterialPathogenAnalyzer/server/backend
+```
 
-# Create and Activate Virtual Environment
+### Step 3 — Create and activate a Python virtual environment
+
+```bash
 python3 -m venv venv
 source venv/bin/activate
 ```
 
-### C. Installation
-
-Install the machine learning dependencies. 
+### Step 4 — Install dependencies
 
 ```bash
-# Install TensorFlow and other dependencies
-pip install tensorflow
 pip install -r requirements.txt
 ```
 
-## 3. Persistence (Systemd Service)
+> ⚠️ TensorFlow (used by the ML model) is large and may take several minutes to download. Ensure the server has a stable internet connection for this step.
 
-To keep the ML model server running 24/7 in the background and ensure it automatically restarts on server reboots:
+### Step 5 — Verify it runs
 
-1.  **Create Service File**: 
-    ```bash
-    sudo nano /etc/systemd/system/bacterial_app.service
-    ```
-    
-2.  **Add Configuration Content** (Update `User` and `WorkingDirectory` paths if your username is not `ubuntu`):
+```bash
+python app.py
+```
 
-    ```ini
-    [Unit]
-    Description=Gunicorn instance serving ML Flask app
-    After=network.target
+You should see output like:
+```
+ * Running on http://0.0.0.0:5000
+```
 
-    [Service]
-    User=ubuntu
-    Group=www-data
-    WorkingDirectory=/home/ubuntu/BacterialPathogenAnalyzer/server/backend
-    Environment="PATH=/home/ubuntu/BacterialPathogenAnalyzer/server/backend/venv/bin"
-    ExecStart=/home/ubuntu/BacterialPathogenAnalyzer/server/backend/venv/bin/gunicorn --workers 2 --bind 0.0.0.0:5000 --timeout 120 app:app
+Press `Ctrl+C` to stop — the next section sets it up to run permanently.
 
-    [Install]
-    WantedBy=multi-user.target
-    ```
+---
 
-3.  **Enable & Start the Service**:
-    ```bash
-    sudo systemctl daemon-reload
-    sudo systemctl enable bacterial_app
-    sudo systemctl start bacterial_app
-    ```
+## 3. Running as a System Service (Permanent / Auto-start)
+
+To keep the ML server running 24/7 and auto-restart on reboot:
+
+### Step 1 — Create the service file
+
+```bash
+sudo nano /etc/systemd/system/bacterial_app.service
+```
+
+### Step 2 — Paste the following configuration
+
+> ⚠️ Replace `ubuntu` with the actual Linux username on your server, and update the path if you cloned the repo to a different location.
+
+```ini
+[Unit]
+Description=Bacterial Pathogen Analyzer ML Backend
+After=network.target
+
+[Service]
+User=ubuntu
+Group=www-data
+WorkingDirectory=/home/ubuntu/BacterialPathogenAnalyzer/server/backend
+Environment="PATH=/home/ubuntu/BacterialPathogenAnalyzer/server/backend/venv/bin"
+ExecStart=/home/ubuntu/BacterialPathogenAnalyzer/server/backend/venv/bin/gunicorn --workers 2 --bind 0.0.0.0:5000 --timeout 120 app:app
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### Step 3 — Enable and start the service
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable bacterial_app
+sudo systemctl start bacterial_app
+```
+
+### Step 4 — Verify the service is running
+
+```bash
+sudo systemctl status bacterial_app
+```
+
+You should see `Active: active (running)`. You can also test the API directly:
+```bash
+curl http://localhost:5000/health
+```
+
+---
 
 ## 4. Connecting the Mobile App
 
-Once the ML server is running, update the React Native frontend to point to this new local endpoint.
-
-In your local development `.env` (and subsequently your EAS Secrets for building), update the API URL to point to the server's local IP:
+Update the app's `.env` file in the root of the project:
 
 ```env
-EXPO_PUBLIC_API_URL=http://<LOCAL_SERVER_IP>:5000
+EXPO_PUBLIC_API_URL=http://<SERVER_IP>:5000
 ```
 
-*Note: Mobile devices must be connected to the campus local network for the application to reach the server.*
+> **Note:** Mobile devices must be connected to the AIMS local Wi-Fi network for the application to reach this server. Ask the IT team to assign a **static IP** to this server so the address never changes.
+
+---
 
 ## 5. Maintenance Commands
 
-If you need to push a model update, check logs, or view errors, you can use these commands on the server:
+| Task | Command |
+|---|---|
+| View live logs | `sudo journalctl -u bacterial_app -f` |
+| Check service status | `sudo systemctl status bacterial_app` |
+| Restart the server | `sudo systemctl restart bacterial_app` |
+| Stop the server | `sudo systemctl stop bacterial_app` |
 
-- **View Live Error Logs**: `sudo journalctl -u bacterial_app -f`
-- **Restart the Server manually**: `sudo systemctl restart bacterial_app`
-- **Check Server Status**: `sudo systemctl status bacterial_app`
-- **Update Code**:
-  ```bash
-  cd ~/BacterialPathogenAnalyzer/server/backend
-  git pull
-  source venv/bin/activate
-  pip install -r requirements.txt # only if dependencies changed
-  sudo systemctl restart bacterial_app
-  ```
+### Updating the ML model or code
+
+```bash
+cd ~/BacterialPathogenAnalyzer/server/backend
+git pull
+source venv/bin/activate
+pip install -r requirements.txt   # only if dependencies changed
+sudo systemctl restart bacterial_app
+```

@@ -1,68 +1,140 @@
-# Local Supabase Deployment Guide for AIMS Kochi
+# Local Supabase Deployment Guide — AIMS Kochi
 
-This guide is intended for the AIMS IT department to deploy a self-hosted instance of Supabase on the campus local server. This replaces the cloud-based Supabase tier, keeping all lab data internally secure and eliminating usage limits.
+This guide is for the AIMS IT department to deploy a self-hosted instance of Supabase on the campus local server. This replaces the cloud-based Supabase tier, keeping all lab data internally secure and eliminating external dependencies.
 
 ## 1. System Requirements
 
-The server should preferably be running Linux (Ubuntu/Debian recommended) with the following minimum specs:
-- **RAM**: Minimum 4GB (8GB recommended)
-- **CPU**: 2+ Cores
-- **Docker**: Docker and Docker Compose (v2) must be installed.
+The server should be running Linux (Ubuntu Server 22.04 LTS recommended) with the following minimum specifications:
+
+| Resource | Minimum | Recommended |
+|---|---|---|
+| RAM | 4 GB | 8 GB |
+| CPU | 2 Cores | 4 Cores |
+| Disk | 20 GB | 50 GB |
+| OS | Ubuntu 22.04 | Ubuntu 22.04 LTS |
+
+**Required software:**
+- Docker Engine (v24+) and Docker Compose (v2) — [Install Guide](https://docs.docker.com/engine/install/ubuntu/)
+
+> ⚠️ **Important:** Ask your network administrator to assign a **static IP address** to this server. The mobile app is configured with the server's IP — if it changes, the app will stop working.
+
+---
 
 ## 2. Setting Up the Supabase Instance
 
-We have provided the official Supabase Docker configuration in the `supabase-local/` directory. 
+The Supabase Docker configuration is in the `supabase-local/` directory of the repository.
 
-1. Copy the `supabase-local/` directory from the repository to your server.
-2. Navigate into the directory on your server:
-   ```bash
-   cd supabase-local
-   ```
-3. Create your `.env` file by copying the provided example:
-   ```bash
-   cp .env.example .env
-   ```
-4. **Important**: Open the `.env` file and configure your credentials. At a minimum, set:
-   - `POSTGRES_PASSWORD`: Make this highly secure.
-   - `JWT_SECRET`: Generate a random secure string.
-   - `ANON_KEY`: Generate a random secure string (or use the one provided by default, but it's recommended to regenerate it).
-   - `SERVICE_ROLE_KEY`: Generate a random secure string.
+### Step 1 — Copy files to the server
 
-5. Start the Supabase stack in the background:
-   ```bash
-   docker compose up -d
-   ```
+Transfer the `supabase-local/` directory to your server (via `git clone`).
 
-Supabase will now take a few moments to spin up all the necessary services (PostgreSQL, Auth API, Storage API, Realtime API, and the Studio UI). 
+### Step 2 — Generate secure credentials
 
-You can access the Supabase Management UI by navigating to:
-`http://<SERVER_IP>:8000`
+```bash
+cd supabase-local
+sh ./utils/generate-keys.sh
+```
+
+This prints your `POSTGRES_PASSWORD`, `JWT_SECRET`, `ANON_KEY`, and `SERVICE_ROLE_KEY`. **Save this output** — you'll need it in the next step.
+
+### Step 3 — Configure the environment file
+
+```bash
+cp .env.example .env
+nano .env
+```
+
+Update the following values with what was generated above:
+
+```env
+POSTGRES_PASSWORD=<generated-value>
+JWT_SECRET=<generated-value>
+ANON_KEY=<generated-value>
+SERVICE_ROLE_KEY=<generated-value>
+DASHBOARD_USERNAME=supabase
+DASHBOARD_PASSWORD=<set-a-strong-password>
+```
+
+Also update the URL variables to match your server's static IP:
+
+```env
+SUPABASE_PUBLIC_URL=http://<SERVER_IP>:8000
+API_EXTERNAL_URL=http://<SERVER_IP>:8000
+```
+
+### Step 4 — Start all services
+
+```bash
+docker compose up -d
+```
+
+Wait about 30 seconds for all containers to become healthy, then verify:
+
+```bash
+docker compose ps
+```
+
+All containers should show `healthy` or `running`. The services that start are:
+
+- `supabase-db` — PostgreSQL database
+- `supabase-auth` — Authentication API
+- `supabase-rest` — Database REST API
+- `supabase-storage` — File storage for colony images
+- `supabase-kong` — API gateway (port 8000)
+- `supabase-studio` — Management dashboard (port 3000)
+- And 4 supporting services
+
+### Stopping the stack
+
+```bash
+# Always use --remove-orphans to clean up properly
+docker compose down --remove-orphans
+```
+
+---
 
 ## 3. Initializing the Database Schema
 
-Since we are transitioning to a fresh local deployment, we need to recreate our database tables and storage bucket rules. We have provided `schema.sql` to automate this.
+This step is required **only once** on a fresh installation.
 
-1. Open a browser and go to your newly running Supabase Studio (`http://<SERVER_IP>:8000`).
-2. Log in with the default Studio credentials. (Usually admin / admin, but check the `.env` file if it prompts you, or it might just give you access directly).
-3. In the left sidebar, navigate to the **SQL Editor**.
+1. Open a browser and go to the Studio dashboard: `http://<SERVER_IP>:3000`
+2. Log in with the `DASHBOARD_USERNAME` and `DASHBOARD_PASSWORD` you set in the `.env` file.
+3. In the left sidebar, click **SQL Editor**.
 4. Click **New query**.
-5. Open the `supabase-local/schema.sql` file provided with this codebase, copy all its contents, and paste it into the editor.
-6. Click **Run**. 
+5. Open the `supabase-local/schema.sql` file, copy all its contents, and paste into the editor.
+6. Click **Run**.
 
-This will automatically create the `analyses` table, setup the row-level security policies, create the `colony-images` storage bucket, and set up bucket permissions.
+This creates the `analyses` table, row-level security policies, the `colony-images` storage bucket, and all bucket permissions.
+
+---
 
 ## 4. Connecting the Mobile App
 
-Once the server is running, the developers will need to update the React Native app to point to your new local instance. 
+Once the server is running, update the app's `.env` file (in the root of the project) with the server's IP and the `ANON_KEY`:
 
-Provide the developers with:
-1. The **IP Address** of the server.
-2. The **ANON_KEY** you configured in step 2.
-
-The developers will put these values in the app's `.env` file:
 ```env
 EXPO_PUBLIC_SUPABASE_URL=http://<SERVER_IP>:8000
-EXPO_PUBLIC_SUPABASE_ANON_KEY=your-new-anon-key-here
+EXPO_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key>
 ```
 
-**Note on Wi-Fi**: Mobile devices running the app must be connected to the AIMS local network/Wi-Fi to communicate with this server.
+> **Note:** Mobile devices running the app must be connected to the AIMS local Wi-Fi network to communicate with this server.
+
+---
+
+## 5. Maintenance
+
+```bash
+# View logs for a specific service
+docker compose logs -f supabase-auth
+
+# Restart a single service
+docker compose restart supabase-auth
+
+# Full reset — WARNING: destroys ALL data
+./reset.sh
+```
+
+To back up the database:
+```bash
+docker exec supabase-db pg_dump -U postgres postgres > backup_$(date +%Y%m%d).sql
+```
