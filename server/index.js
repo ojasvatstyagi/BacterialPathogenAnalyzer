@@ -1,7 +1,11 @@
-const express = require("express");
-const cors = require("cors");
-const multer = require("multer");
-const path = require("path");
+import express from "express";
+import cors from "cors";
+import multer from "multer";
+import path from "path";
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -14,7 +18,7 @@ app.use(express.urlencoded({ extended: true }));
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/");
+    cb(null, path.join(__dirname, "uploads"));
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
@@ -223,12 +227,12 @@ app.use((req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Bacterial Pathogen Analyzer API running on port ${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
+  console.log(`Bacterial Pathogen Analyzer API running on port ${PORT}`);
+  console.log(`Health check: http://localhost:${PORT}/api/health`);
   console.log(
-    `🔬 Image analysis: POST http://localhost:${PORT}/api/analyze-image`
+    `Image analysis: POST http://localhost:${PORT}/api/analyze-image`
   );
-  console.log(`📄 Send report: POST http://localhost:${PORT}/api/send-report`);
+  console.log(`Send report: POST http://localhost:${PORT}/api/send-report`);
 });
 
 module.exports = app;
