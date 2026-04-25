@@ -12,7 +12,6 @@ import {
 } from 'react-native';
 import { Link, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
@@ -29,12 +28,11 @@ export default function LoginScreen() {
     {},
   );
   const [formError, setFormError] = useState<string | null>(null);
-  const [googleLoading, setGoogleLoading] = useState(false);
 
   // Refs for keyboard focus management
   const passwordRef = useRef<TextInput>(null); // Ref for password input
 
-  const { signIn, signInWithGoogle } = useAuth();
+  const { signIn } = useAuth();
 
   const validateForm = () => {
     const newErrors: { email?: string; password?: string } = {};
@@ -74,23 +72,6 @@ export default function LoginScreen() {
       setFormError('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    setFormError(null);
-    setGoogleLoading(true);
-    try {
-      const { error } = await signInWithGoogle();
-      if (error) {
-        setFormError(error.message);
-      } else {
-        router.replace('/(tabs)');
-      }
-    } catch (error) {
-      setFormError('An unexpected error occurred. Please try again.');
-    } finally {
-      setGoogleLoading(false);
     }
   };
 
@@ -154,35 +135,6 @@ export default function LoginScreen() {
                 onPress={handleSignIn}
                 loading={loading}
                 style={styles.signInButton}
-              />
-              <View style={styles.dividerContainer}>
-                <View
-                  style={[
-                    styles.dividerLine,
-                    { backgroundColor: colors.border },
-                  ]}
-                />
-                <Text
-                  style={[styles.dividerText, { color: colors.textSecondary }]}
-                >
-                  OR
-                </Text>
-                <View
-                  style={[
-                    styles.dividerLine,
-                    { backgroundColor: colors.border },
-                  ]}
-                />
-              </View>
-              <Button
-                title="Continue with Google"
-                onPress={handleGoogleSignIn}
-                loading={googleLoading}
-                variant="outline"
-                icon={
-                  <Ionicons name="logo-google" size={20} color={colors.text} />
-                }
-                style={styles.googleButton}
               />
               {/* Smoother Error Handling: Display form error here */}
               {formError && (
@@ -263,22 +215,6 @@ const styles = StyleSheet.create({
     ...typography.body,
     textAlign: 'center',
     marginTop: spacing.md,
-    marginBottom: spacing.sm,
-  },
-  dividerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: spacing.lg,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-  },
-  dividerText: {
-    ...typography.caption,
-    marginHorizontal: spacing.md,
-  },
-  googleButton: {
     marginBottom: spacing.sm,
   },
 });

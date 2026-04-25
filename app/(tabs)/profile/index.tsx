@@ -6,21 +6,15 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
-  Linking,
-  Platform,
 } from "react-native";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   User,
-  Mail,
-  Circle as HelpCircle,
-  FileText,
-  Bell,
-  LogOut,
   Moon,
   Shield,
-  Trash2,
+  FileText,
+  LogOut,
 } from "lucide-react-native";
 import * as LocalAuthentication from "expo-local-authentication";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -40,11 +34,8 @@ export default function ProfileScreen() {
   const { isDark, toggleTheme, colors } = useTheme();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   // Persistence states (mocked for now, would be in context or async storage in real app)
-  const [emailNotifs, setEmailNotifs] = useState(true);
-  const [pushNotifs, setPushNotifs] = useState(true);
   const [isBiometricEnabled, setIsBiometricEnabled] = useState(false);
 
   // Check initial biometric state
@@ -167,38 +158,6 @@ export default function ProfileScreen() {
     }
   };
 
-  const handleDeleteAccount = async () => {
-    Alert.alert(
-      "Delete Account",
-      "This action cannot be undone. All your data will be permanently deleted.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            setIsDeleting(true);
-            try {
-              const { error } = await supabase.rpc("delete_user");
-              if (error) {
-                throw error;
-              }
-              Alert.alert("Success", "Your account has been deleted.");
-              await signOut();
-              router.replace("/(auth)/login");
-            } catch (error) {
-              Alert.alert(
-                "Error",
-                "Failed to delete account. Please try again."
-              );
-            } finally {
-              setIsDeleting(false);
-            }
-          },
-        },
-      ]
-    );
-  };
 
   // Get user's display information
   const getUserDisplayName = () => {
@@ -280,25 +239,6 @@ export default function ProfileScreen() {
             buttonTitle="Edit"
             onPress={() => router.push("/(tabs)/profile/edit-profile")}
           />
-
-          <Text> Comming soon.....</Text>
-          <ProfileOption
-            icon={Mail}
-            title="Email Notifications"
-            subtitle="Manage email alerts and updates"
-            variant="switch"
-            value={emailNotifs}
-            onValueChange={setEmailNotifs}
-          />
-
-          <ProfileOption
-            icon={Bell}
-            title="Push Notifications"
-            subtitle="Configure app notifications"
-            variant="switch"
-            value={pushNotifs}
-            onValueChange={setPushNotifs}
-          />
         </View>
 
         <View style={styles.section}>
@@ -324,14 +264,6 @@ export default function ProfileScreen() {
             onPress={handleExportData}
             loading={isExporting}
           />
-
-          <ProfileOption
-            icon={HelpCircle}
-            title="Help & Support"
-            buttonTitle="Mail Us"
-            subtitle="Get help with the app"
-            onPress={() => Linking.openURL("mailto:ojastyagi753@gmail.com")}
-          />
         </View>
 
         <View style={styles.section}>
@@ -344,15 +276,6 @@ export default function ProfileScreen() {
             variant="secondary"
             style={styles.signOutButton}
             icon={<LogOut size={20} color={colors.text} />}
-          />
-
-          <ProfileOption
-            icon={Trash2}
-            title="Delete Account"
-            subtitle="Permanently delete your account"
-            onPress={handleDeleteAccount}
-            variant="danger"
-            loading={isDeleting}
           />
         </View>
 
