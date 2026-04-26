@@ -121,7 +121,27 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key>
 
 ---
 
-## 5. Maintenance
+## 5. Data Persistence & Storage Volumes
+
+By default, the database is stored in a Docker named volume (`supabase_db-config`). 
+
+However, for **Colony Images Storage**, the configuration depends on the host OS:
+
+### Mac / Windows (Development)
+Due to file system limitations (VirtioFS does not support the `xattr` metadata required by the Storage API), **Mac and Windows users MUST use Docker named volumes** (`storage-data`) for the `storage` and `imgproxy` containers in `docker-compose.yml`.
+
+### Linux / Ubuntu (AIMS Kochi Production)
+For the Linux deployment, it is highly recommended to switch the storage volume to a direct folder (bind mount) so IT can easily back up the raw image files without dealing with internal Docker volumes.
+
+To do this, before running `docker compose up -d`, edit the `supabase-local/docker-compose.yml` file under both the `storage` and `imgproxy` services:
+1. Comment out the named volume: `# - storage-data:/var/lib/storage`
+2. Uncomment the bind mount: `- ./volumes/storage:/var/lib/storage:z`
+
+To back up the images when using a bind mount, simply archive the `./volumes/storage` directory.
+
+---
+
+## 6. Maintenance
 
 ```bash
 # View logs for a specific service
