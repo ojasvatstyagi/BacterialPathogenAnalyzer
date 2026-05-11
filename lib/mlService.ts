@@ -7,7 +7,7 @@ import Constants from 'expo-constants';
 import * as ImageManipulator from 'expo-image-manipulator';
 
 // API Configuration
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://3.110.56.47:5000';
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://3.110.56.47:5005';
 
 export interface PredictionRequest {
   imageUri: string;
@@ -96,7 +96,7 @@ export async function checkMLApiHealth(): Promise<boolean> {
     }
 
     const data = await response.json();
-    return data.status === 'healthy' && data.model_loaded === true;
+    return (data.status === 'ok' || data.status === 'healthy') && data.model_loaded === true;
   } catch (error) {
     console.error('ML API health check failed:', error);
     return false;

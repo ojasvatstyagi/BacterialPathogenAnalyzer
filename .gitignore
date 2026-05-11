@@ -42,3 +42,8 @@ lab_deployment_proposal.md
 
 # Supabase Local
 supabase-local/volumes/
+
+# Python
+__pycache__/
+*.pyc
+server/backend2/venv/
